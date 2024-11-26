@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+service MasterService {
+    rpc ProcessImage (ImageRequest) returns (ImageResponse);
+}
+
+service WorkerService {
+    rpc ProcessChunk (ChunkRequest) returns (ChunkResponse);
+}
+
+message ImageRequest {
+    bytes image_data = 1;  // The image data in bytes
+}
+
+message ImageResponse {
+    repeated ChunkResponse worker_responses = 1;
+}
+
+message ChunkRequest {
+    bytes chunk_data = 1;  // Changed from string to bytes for binary data
+}
+
+message ChunkResponse {
+    string result = 1;
+    string worker_id = 2;
+}

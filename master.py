@@ -1,33 +1,39 @@
-from flask import Flask, request, jsonify
-import requests
+import grpc
+import image_processing_pb2
+import image_processing_pb2_grpc
+from PIL import Image
+import io
 
-app = Flask(__name__)
 
-# Worker node addresses (can be expanded dynamically in a real setup)
-WORKER_NODES = ["http://localhost:5001", "http://localhost:5002"]
+# Master node communication with workers
+def send_image_to_worker(worker_address, image_data):
+    with grpc.insecure_channel(worker_address) as channel:
+        stub = image_processing_pb2_grpc.WorkerServiceStub(channel)
+        # Send image_data wrapped in a ChunkRequest if the worker expects chunk_data
+        response = stub.ProcessChunk(image_processing_pb2.ChunkRequest(chunk_data=image_data))
+        return response.result  # Assuming worker returns processed data in 'result'
 
-@app.route('/process', methods=['POST'])
-def process_request():
-    data = request.json
-    print(f"Received data: {data}")  # Debugging line
-    image_data = data.get("image", None)
-    if not image_data:
-        return jsonify({"error": "No image data provided"}), 400
 
-    # Simulate task splitting (for simplicity, send the same data to all workers)
-    responses = []
-    for worker in WORKER_NODES:
-        print(f"Sending data to worker: {worker}")  # Debugging line
-        try:
-            response = requests.post(f"{worker}/process", json={"image_chunk": image_data}, timeout=5)
-            responses.append(response.json())
-        except requests.exceptions.RequestException as e:
-            responses.append({"error": f"Worker {worker} not reachable", "details": str(e)})
 
-    aggregated_response = {"worker_responses": responses}
-    print(f"Aggregated response: {aggregated_response}")  # Debugging line
-    return jsonify(aggregated_response)
+# Main master node function
+def master_node(image_data):
+    worker_addresses = ["localhost:50051", "localhost:50052"]  # Example worker nodes
+    results = []
+
+    for worker_address in worker_addresses:
+        print(f"Sending image data to worker at {worker_address}...")
+        processed_data = send_image_to_worker(worker_address, image_data)
+        results.append(processed_data)
+
+    print(f"Master node received processed data from workers: {results}")
+    return results
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    # You can pass image data from the client dynamically
+    image_path = input("Enter image path: ")
+    with open(image_path, 'rb') as img_file:
+        image_data = img_file.read()
+
+    # Call master node function with the image data
+    master_node(image_data)

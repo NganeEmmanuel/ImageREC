@@ -1,21 +1,24 @@
-import requests
+import grpc
+import image_processing_pb2
+import image_processing_pb2_grpc
 
-def send_image():
-    url = "http://localhost:5000/process"  # Master node URL
 
-    # Read image file and send its content (for testing, using a sample image)
-    try:
-        with open("repair1.jpg", "rb") as image_file:
-            image_data = image_file.read()
+def send_image_to_master(image_path):
+    # Read the image file as bytes
+    with open(image_path, 'rb') as f:
+        image_data = f.read()  # This reads the image as binary data
 
-        # Send the image data as a POST request to the master node
-        response = requests.post(url, json={"image": image_data.hex()})  # Using .hex() to convert binary data to a string
-        print(f"Response from master node: {response.json()}")
+    # Create a stub for communication with the master node
+    with grpc.insecure_channel('localhost:50051') as channel:
+        stub = image_processing_pb2_grpc.MasterServiceStub(channel)
 
-    except FileNotFoundError:
-        print("Error: Image file not found.")
-    except requests.exceptions.RequestException as e:
-        print(f"Error communicating with master node: {e}")
+        # Send the image data as part of the request
+        response = stub.ProcessImage(image_processing_pb2.ImageRequest(image_data=image_data))
+
+        # Print the response
+        print("Response from master:", response)
+
 
 if __name__ == "__main__":
-    send_image()
+    image_path = "repair1.jpg"  # Update this with the actual image path
+    send_image_to_master(image_path)
