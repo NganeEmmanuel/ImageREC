@@ -7,6 +7,7 @@ import torch
 from yolov5 import YOLOv5
 import cv2
 import numpy as np
+import json  # Import for JSON serialization
 
 
 class WorkerServiceServicer(image_processing_pb2_grpc.WorkerServiceServicer):
@@ -31,11 +32,13 @@ class WorkerServiceServicer(image_processing_pb2_grpc.WorkerServiceServicer):
                 "confidence": float(conf)  # Confidence score
             })
 
-        # Log and return response
-        print(f"Processed chunk with {len(detections)} detections.")
+        # Log the results
+        print(f"Processed chunk with {len(detections)} detections: {detections}")
+
+        # Serialize detections into a JSON string for the response
         return image_processing_pb2.ChunkResponse(
-            result=str(detections),  # Serialize detections as string
-            worker_id="Worker-50051"  # Example worker ID
+            result=json.dumps(detections),  # Serialize to JSON string
+            worker_id=f"Worker-{context.peer()}"  # Use context.peer() for dynamic worker ID
         )
 
 
