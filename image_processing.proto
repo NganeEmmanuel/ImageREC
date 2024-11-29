@@ -6,6 +6,7 @@ service MasterService {
 
 service WorkerService {
     rpc ProcessChunk (ChunkRequest) returns (ChunkResponse);
+    rpc HealthCheck (HealthRequest) returns (HealthResponse);  // Added HealthCheck
 }
 
 message ImageRequest {
@@ -23,4 +24,12 @@ message ChunkRequest {
 message ChunkResponse {
     string result = 1;
     string worker_id = 2;
+}
+
+message HealthRequest {
+    // No fields for basic health check
+}
+
+message HealthResponse {
+    string status = 1; // Health status message
 }

@@ -30,3 +30,13 @@ class ChunkResponse(_message.Message):
     result: str
     worker_id: str
     def __init__(self, result: _Optional[str] = ..., worker_id: _Optional[str] = ...) -> None: ...
+
+class HealthRequest(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class HealthResponse(_message.Message):
+    __slots__ = ("status",)
+    STATUS_FIELD_NUMBER: _ClassVar[int]
+    status: str
+    def __init__(self, status: _Optional[str] = ...) -> None: ...

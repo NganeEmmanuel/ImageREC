@@ -111,6 +111,11 @@ class WorkerServiceStub(object):
                 request_serializer=image__processing__pb2.ChunkRequest.SerializeToString,
                 response_deserializer=image__processing__pb2.ChunkResponse.FromString,
                 _registered_method=True)
+        self.HealthCheck = channel.unary_unary(
+                '/WorkerService/HealthCheck',
+                request_serializer=image__processing__pb2.HealthRequest.SerializeToString,
+                response_deserializer=image__processing__pb2.HealthResponse.FromString,
+                _registered_method=True)
 
 
 class WorkerServiceServicer(object):
@@ -122,6 +127,13 @@ class WorkerServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def HealthCheck(self, request, context):
+        """Added HealthCheck
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_WorkerServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -129,6 +141,11 @@ def add_WorkerServiceServicer_to_server(servicer, server):
                     servicer.ProcessChunk,
                     request_deserializer=image__processing__pb2.ChunkRequest.FromString,
                     response_serializer=image__processing__pb2.ChunkResponse.SerializeToString,
+            ),
+            'HealthCheck': grpc.unary_unary_rpc_method_handler(
+                    servicer.HealthCheck,
+                    request_deserializer=image__processing__pb2.HealthRequest.FromString,
+                    response_serializer=image__processing__pb2.HealthResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -158,6 +175,33 @@ class WorkerService(object):
             '/WorkerService/ProcessChunk',
             image__processing__pb2.ChunkRequest.SerializeToString,
             image__processing__pb2.ChunkResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def HealthCheck(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/WorkerService/HealthCheck',
+            image__processing__pb2.HealthRequest.SerializeToString,
+            image__processing__pb2.HealthResponse.FromString,
             options,
             channel_credentials,
             insecure,

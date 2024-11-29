@@ -4,7 +4,6 @@ import time
 import image_processing_pb2
 import image_processing_pb2_grpc
 import torch
-from yolov5 import YOLOv5
 import cv2
 import numpy as np
 import json  # Import for JSON serialization
@@ -40,6 +39,9 @@ class WorkerServiceServicer(image_processing_pb2_grpc.WorkerServiceServicer):
             result=json.dumps(detections),  # Serialize to JSON string
             worker_id=f"Worker-{context.peer()}"  # Use context.peer() for dynamic worker ID
         )
+
+    def HealthCheck(self, request, context):
+        return image_processing_pb2.HealthResponse(status="Healthy")
 
 
 def serve(port):

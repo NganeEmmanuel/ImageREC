@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16image_processing.proto\"\"\n\x0cImageRequest\x12\x12\n\nimage_data\x18\x01 \x01(\x0c\"9\n\rImageResponse\x12(\n\x10worker_responses\x18\x01 \x03(\x0b\x32\x0e.ChunkResponse\"\"\n\x0c\x43hunkRequest\x12\x12\n\nchunk_data\x18\x01 \x01(\x0c\"2\n\rChunkResponse\x12\x0e\n\x06result\x18\x01 \x01(\t\x12\x11\n\tworker_id\x18\x02 \x01(\t2>\n\rMasterService\x12-\n\x0cProcessImage\x12\r.ImageRequest\x1a\x0e.ImageResponse2>\n\rWorkerService\x12-\n\x0cProcessChunk\x12\r.ChunkRequest\x1a\x0e.ChunkResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16image_processing.proto\"\"\n\x0cImageRequest\x12\x12\n\nimage_data\x18\x01 \x01(\x0c\"9\n\rImageResponse\x12(\n\x10worker_responses\x18\x01 \x03(\x0b\x32\x0e.ChunkResponse\"\"\n\x0c\x43hunkRequest\x12\x12\n\nchunk_data\x18\x01 \x01(\x0c\"2\n\rChunkResponse\x12\x0e\n\x06result\x18\x01 \x01(\t\x12\x11\n\tworker_id\x18\x02 \x01(\t\"\x0f\n\rHealthRequest\" \n\x0eHealthResponse\x12\x0e\n\x06status\x18\x01 \x01(\t2>\n\rMasterService\x12-\n\x0cProcessImage\x12\r.ImageRequest\x1a\x0e.ImageResponse2n\n\rWorkerService\x12-\n\x0cProcessChunk\x12\r.ChunkRequest\x1a\x0e.ChunkResponse\x12.\n\x0bHealthCheck\x12\x0e.HealthRequest\x1a\x0f.HealthResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -39,8 +39,12 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_CHUNKREQUEST']._serialized_end=155
   _globals['_CHUNKRESPONSE']._serialized_start=157
   _globals['_CHUNKRESPONSE']._serialized_end=207
-  _globals['_MASTERSERVICE']._serialized_start=209
-  _globals['_MASTERSERVICE']._serialized_end=271
-  _globals['_WORKERSERVICE']._serialized_start=273
-  _globals['_WORKERSERVICE']._serialized_end=335
+  _globals['_HEALTHREQUEST']._serialized_start=209
+  _globals['_HEALTHREQUEST']._serialized_end=224
+  _globals['_HEALTHRESPONSE']._serialized_start=226
+  _globals['_HEALTHRESPONSE']._serialized_end=258
+  _globals['_MASTERSERVICE']._serialized_start=260
+  _globals['_MASTERSERVICE']._serialized_end=322
+  _globals['_WORKERSERVICE']._serialized_start=324
+  _globals['_WORKERSERVICE']._serialized_end=434
 # @@protoc_insertion_point(module_scope)
