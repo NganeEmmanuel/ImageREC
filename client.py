@@ -1,52 +1,109 @@
+import argparse
 import grpc
 import image_processing_pb2
 import image_processing_pb2_grpc
+import sys
 
 
-def send_image_to_master(image_path):
+def detect_image(image_path):
     """
-    Sends an image to the master node for processing and prints the descriptions
-    of detected objects.
-
-    Args:
-        image_path (str): Path to the image file to be sent.
+    Sends an image to the master for processing and returns a request ID.
     """
-    # Read the image file as bytes
     try:
         with open(image_path, 'rb') as f:
-            image_data = f.read()  # Read the entire image file as binary data
+            image_data = f.read()
     except FileNotFoundError:
         print(f"Error: File '{image_path}' not found.")
         return
 
-    # Establish a gRPC channel with the master server
     with grpc.insecure_channel('localhost:50051') as channel:
-        stub = image_processing_pb2_grpc.MasterServiceStub(channel)  # Create a stub to interact with the master server
-
-        # Send the image data to the master server
+        stub = image_processing_pb2_grpc.MasterServiceStub(channel)
         try:
             response = stub.ProcessImage(image_processing_pb2.ImageRequest(image_data=image_data))
-
-            # Print the responses from the workers
-            print("\nDescriptions of detected objects:")
-            for description in response.worker_responses:
-                print(description.result)
+            print(f"Request submitted. Request ID: {response.request_id}")
         except grpc.RpcError as e:
-            # Handle gRPC communication errors
             print(f"Error communicating with master: {str(e)}")
 
 
+def get_result(request_id):
+    """
+    Fetches the result of a processed request using the request ID.
+    """
+    with grpc.insecure_channel('localhost:50051') as channel:
+        stub = image_processing_pb2_grpc.MasterServiceStub(channel)
+        try:
+            response = stub.GetResult(image_processing_pb2.ResultRequest(request_id=request_id))
+            if response.result_available:
+                print(f"Result for Request ID {request_id}: {response.result}")
+            else:
+                print(f"Result not yet available for Request ID {request_id}.")
+        except grpc.RpcError as e:
+            print(f"Error fetching result: {str(e)}")
+
+
+def list_models():
+    """
+    Lists all available models on the server.
+    """
+    with grpc.insecure_channel('localhost:50051') as channel:
+        stub = image_processing_pb2_grpc.MasterServiceStub(channel)
+        try:
+            response = stub.ListModels(image_processing_pb2.ModelListRequest())
+            print("Available Models:")
+            for model in response.models:
+                print(f"- {model}")
+        except grpc.RpcError as e:
+            print(f"Error fetching models: {str(e)}")
+
+
+def model_details(model_name):
+    """
+    Fetches details of a specific model.
+    """
+    with grpc.insecure_channel('localhost:50051') as channel:
+        stub = image_processing_pb2_grpc.MasterServiceStub(channel)
+        try:
+            response = stub.GetModelDetails(image_processing_pb2.ModelDetailRequest(model_name=model_name))
+            print(f"Details for Model '{model_name}':")
+            print(response.details)
+        except grpc.RpcError as e:
+            print(f"Error fetching model details: {str(e)}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Client for image recognition.")
+    subparsers = parser.add_subparsers(dest="command", help="Commands")
+
+    # Detect command
+    detect_parser = subparsers.add_parser("detect", help="Detect objects in an image")
+    detect_parser.add_argument("image_path", type=str, help="Path to the image file")
+
+    # Result command
+    result_parser = subparsers.add_parser("result", help="Fetch the result of a request")
+    result_parser.add_argument("request_id", type=str, help="Request ID")
+
+    # List models command
+    subparsers.add_parser("get models", help="List all available models")
+
+    # Model details command
+    model_parser = subparsers.add_parser("model", help="Get details of a specific model")
+    model_parser.add_argument("model_name", type=str, help="Name of the model")
+
+    # Parse arguments
+    args = parser.parse_args()
+
+    # Execute commands
+    if args.command == "detect":
+        detect_image(args.image_path)
+    elif args.command == "result":
+        get_result(args.request_id)
+    elif args.command == "get models":
+        list_models()
+    elif args.command == "model":
+        model_details(args.model_name)
+    else:
+        parser.print_help()
+
+
 if __name__ == "__main__":
-    """
-    Client script entry point.
-    Continuously prompts the user for image paths to process. 
-    Type 'exit' to exit
-    """
-    print("Client started. Enter image file paths to process them. Type 'exit' to quit.")
-    while True:
-        # Prompt user to input the path to an image
-        image_path = input("\nEnter image path: ")
-        if image_path.lower() == "exit":
-            print("Exiting client.")
-            break
-        send_image_to_master(image_path)
+    main()

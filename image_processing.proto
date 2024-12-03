@@ -1,35 +1,40 @@
 syntax = "proto3";
 
 service MasterService {
-    rpc ProcessImage (ImageRequest) returns (ImageResponse);
-}
-
-service WorkerService {
-    rpc ProcessChunk (ChunkRequest) returns (ChunkResponse);
-    rpc HealthCheck (HealthRequest) returns (HealthResponse);  // Added HealthCheck
+    rpc ProcessImage (ImageRequest) returns (ImageResponse);   // Existing
+    rpc QueryResult (ResultRequest) returns (ResultResponse); // Fetch results
+    rpc GetModels (ModelRequest) returns (ModelResponse);     // List models
+    rpc GetModelDetails (ModelDetailRequest) returns (ModelDetailResponse); // Model details
 }
 
 message ImageRequest {
-    bytes image_data = 1;  // The image data in bytes
+    bytes image_data = 1;
+    string user_id = 2;  // User ID for multitenancy
 }
 
 message ImageResponse {
-    repeated ChunkResponse worker_responses = 1;
+    string request_id = 1;  // Request ID returned to the client
 }
 
-message ChunkRequest {
-    bytes chunk_data = 1;  // Changed from string to bytes for binary data
+message ResultRequest {
+    string request_id = 1;  // Request ID to fetch results
 }
 
-message ChunkResponse {
-    string result = 1;
-    string worker_id = 2;
+message ResultResponse {
+    string status = 1;      // Processing status: PENDING, COMPLETED, FAILED
+    string result = 2;      // JSON or descriptive result
 }
 
-message HealthRequest {
-    // No fields for basic health check
+message ModelRequest {}
+
+message ModelResponse {
+    repeated string model_names = 1; // List of available models
 }
 
-message HealthResponse {
-    string status = 1; // Health status message
+message ModelDetailRequest {
+    string model_name = 1;
+}
+
+message ModelDetailResponse {
+    string details = 1; // Model-specific details
 }
