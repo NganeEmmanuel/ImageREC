@@ -39,13 +39,50 @@ class MasterServiceStub(object):
                 request_serializer=image__processing__pb2.ImageRequest.SerializeToString,
                 response_deserializer=image__processing__pb2.ImageResponse.FromString,
                 _registered_method=True)
+        self.QueryResult = channel.unary_unary(
+                '/MasterService/QueryResult',
+                request_serializer=image__processing__pb2.ResultRequest.SerializeToString,
+                response_deserializer=image__processing__pb2.ResultResponse.FromString,
+                _registered_method=True)
+        self.GetModels = channel.unary_unary(
+                '/MasterService/GetModels',
+                request_serializer=image__processing__pb2.ModelRequest.SerializeToString,
+                response_deserializer=image__processing__pb2.ModelResponse.FromString,
+                _registered_method=True)
+        self.GetModelDetails = channel.unary_unary(
+                '/MasterService/GetModelDetails',
+                request_serializer=image__processing__pb2.ModelDetailRequest.SerializeToString,
+                response_deserializer=image__processing__pb2.ModelDetailResponse.FromString,
+                _registered_method=True)
 
 
 class MasterServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def ProcessImage(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Existing
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def QueryResult(self, request, context):
+        """Fetch results
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetModels(self, request, context):
+        """List models
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetModelDetails(self, request, context):
+        """Model details
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -57,6 +94,21 @@ def add_MasterServiceServicer_to_server(servicer, server):
                     servicer.ProcessImage,
                     request_deserializer=image__processing__pb2.ImageRequest.FromString,
                     response_serializer=image__processing__pb2.ImageResponse.SerializeToString,
+            ),
+            'QueryResult': grpc.unary_unary_rpc_method_handler(
+                    servicer.QueryResult,
+                    request_deserializer=image__processing__pb2.ResultRequest.FromString,
+                    response_serializer=image__processing__pb2.ResultResponse.SerializeToString,
+            ),
+            'GetModels': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetModels,
+                    request_deserializer=image__processing__pb2.ModelRequest.FromString,
+                    response_serializer=image__processing__pb2.ModelResponse.SerializeToString,
+            ),
+            'GetModelDetails': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetModelDetails,
+                    request_deserializer=image__processing__pb2.ModelDetailRequest.FromString,
+                    response_serializer=image__processing__pb2.ModelDetailResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -96,70 +148,8 @@ class MasterService(object):
             metadata,
             _registered_method=True)
 
-
-class WorkerServiceStub(object):
-    """Missing associated documentation comment in .proto file."""
-
-    def __init__(self, channel):
-        """Constructor.
-
-        Args:
-            channel: A grpc.Channel.
-        """
-        self.ProcessChunk = channel.unary_unary(
-                '/WorkerService/ProcessChunk',
-                request_serializer=image__processing__pb2.ChunkRequest.SerializeToString,
-                response_deserializer=image__processing__pb2.ChunkResponse.FromString,
-                _registered_method=True)
-        self.HealthCheck = channel.unary_unary(
-                '/WorkerService/HealthCheck',
-                request_serializer=image__processing__pb2.HealthRequest.SerializeToString,
-                response_deserializer=image__processing__pb2.HealthResponse.FromString,
-                _registered_method=True)
-
-
-class WorkerServiceServicer(object):
-    """Missing associated documentation comment in .proto file."""
-
-    def ProcessChunk(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def HealthCheck(self, request, context):
-        """Added HealthCheck
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-
-def add_WorkerServiceServicer_to_server(servicer, server):
-    rpc_method_handlers = {
-            'ProcessChunk': grpc.unary_unary_rpc_method_handler(
-                    servicer.ProcessChunk,
-                    request_deserializer=image__processing__pb2.ChunkRequest.FromString,
-                    response_serializer=image__processing__pb2.ChunkResponse.SerializeToString,
-            ),
-            'HealthCheck': grpc.unary_unary_rpc_method_handler(
-                    servicer.HealthCheck,
-                    request_deserializer=image__processing__pb2.HealthRequest.FromString,
-                    response_serializer=image__processing__pb2.HealthResponse.SerializeToString,
-            ),
-    }
-    generic_handler = grpc.method_handlers_generic_handler(
-            'WorkerService', rpc_method_handlers)
-    server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('WorkerService', rpc_method_handlers)
-
-
- # This class is part of an EXPERIMENTAL API.
-class WorkerService(object):
-    """Missing associated documentation comment in .proto file."""
-
     @staticmethod
-    def ProcessChunk(request,
+    def QueryResult(request,
             target,
             options=(),
             channel_credentials=None,
@@ -172,9 +162,9 @@ class WorkerService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/WorkerService/ProcessChunk',
-            image__processing__pb2.ChunkRequest.SerializeToString,
-            image__processing__pb2.ChunkResponse.FromString,
+            '/MasterService/QueryResult',
+            image__processing__pb2.ResultRequest.SerializeToString,
+            image__processing__pb2.ResultResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -186,7 +176,7 @@ class WorkerService(object):
             _registered_method=True)
 
     @staticmethod
-    def HealthCheck(request,
+    def GetModels(request,
             target,
             options=(),
             channel_credentials=None,
@@ -199,9 +189,36 @@ class WorkerService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/WorkerService/HealthCheck',
-            image__processing__pb2.HealthRequest.SerializeToString,
-            image__processing__pb2.HealthResponse.FromString,
+            '/MasterService/GetModels',
+            image__processing__pb2.ModelRequest.SerializeToString,
+            image__processing__pb2.ModelResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetModelDetails(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/MasterService/GetModelDetails',
+            image__processing__pb2.ModelDetailRequest.SerializeToString,
+            image__processing__pb2.ModelDetailResponse.FromString,
             options,
             channel_credentials,
             insecure,

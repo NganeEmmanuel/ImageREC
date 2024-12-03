@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16image_processing.proto\"\"\n\x0cImageRequest\x12\x12\n\nimage_data\x18\x01 \x01(\x0c\"9\n\rImageResponse\x12(\n\x10worker_responses\x18\x01 \x03(\x0b\x32\x0e.ChunkResponse\"\"\n\x0c\x43hunkRequest\x12\x12\n\nchunk_data\x18\x01 \x01(\x0c\"2\n\rChunkResponse\x12\x0e\n\x06result\x18\x01 \x01(\t\x12\x11\n\tworker_id\x18\x02 \x01(\t\"\x0f\n\rHealthRequest\" \n\x0eHealthResponse\x12\x0e\n\x06status\x18\x01 \x01(\t2>\n\rMasterService\x12-\n\x0cProcessImage\x12\r.ImageRequest\x1a\x0e.ImageResponse2n\n\rWorkerService\x12-\n\x0cProcessChunk\x12\r.ChunkRequest\x1a\x0e.ChunkResponse\x12.\n\x0bHealthCheck\x12\x0e.HealthRequest\x1a\x0f.HealthResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16image_processing.proto\"3\n\x0cImageRequest\x12\x12\n\nimage_data\x18\x01 \x01(\x0c\x12\x0f\n\x07user_id\x18\x02 \x01(\t\"#\n\rImageResponse\x12\x12\n\nrequest_id\x18\x01 \x01(\t\"#\n\rResultRequest\x12\x12\n\nrequest_id\x18\x01 \x01(\t\"0\n\x0eResultResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x0e\n\x06result\x18\x02 \x01(\t\"\x0e\n\x0cModelRequest\"$\n\rModelResponse\x12\x13\n\x0bmodel_names\x18\x01 \x03(\t\"(\n\x12ModelDetailRequest\x12\x12\n\nmodel_name\x18\x01 \x01(\t\"&\n\x13ModelDetailResponse\x12\x0f\n\x07\x64\x65tails\x18\x01 \x01(\t2\xd8\x01\n\rMasterService\x12-\n\x0cProcessImage\x12\r.ImageRequest\x1a\x0e.ImageResponse\x12.\n\x0bQueryResult\x12\x0e.ResultRequest\x1a\x0f.ResultResponse\x12*\n\tGetModels\x12\r.ModelRequest\x1a\x0e.ModelResponse\x12<\n\x0fGetModelDetails\x12\x13.ModelDetailRequest\x1a\x14.ModelDetailResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -32,19 +32,21 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'image_processing_pb2', _glo
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
   _globals['_IMAGEREQUEST']._serialized_start=26
-  _globals['_IMAGEREQUEST']._serialized_end=60
-  _globals['_IMAGERESPONSE']._serialized_start=62
-  _globals['_IMAGERESPONSE']._serialized_end=119
-  _globals['_CHUNKREQUEST']._serialized_start=121
-  _globals['_CHUNKREQUEST']._serialized_end=155
-  _globals['_CHUNKRESPONSE']._serialized_start=157
-  _globals['_CHUNKRESPONSE']._serialized_end=207
-  _globals['_HEALTHREQUEST']._serialized_start=209
-  _globals['_HEALTHREQUEST']._serialized_end=224
-  _globals['_HEALTHRESPONSE']._serialized_start=226
-  _globals['_HEALTHRESPONSE']._serialized_end=258
-  _globals['_MASTERSERVICE']._serialized_start=260
-  _globals['_MASTERSERVICE']._serialized_end=322
-  _globals['_WORKERSERVICE']._serialized_start=324
-  _globals['_WORKERSERVICE']._serialized_end=434
+  _globals['_IMAGEREQUEST']._serialized_end=77
+  _globals['_IMAGERESPONSE']._serialized_start=79
+  _globals['_IMAGERESPONSE']._serialized_end=114
+  _globals['_RESULTREQUEST']._serialized_start=116
+  _globals['_RESULTREQUEST']._serialized_end=151
+  _globals['_RESULTRESPONSE']._serialized_start=153
+  _globals['_RESULTRESPONSE']._serialized_end=201
+  _globals['_MODELREQUEST']._serialized_start=203
+  _globals['_MODELREQUEST']._serialized_end=217
+  _globals['_MODELRESPONSE']._serialized_start=219
+  _globals['_MODELRESPONSE']._serialized_end=255
+  _globals['_MODELDETAILREQUEST']._serialized_start=257
+  _globals['_MODELDETAILREQUEST']._serialized_end=297
+  _globals['_MODELDETAILRESPONSE']._serialized_start=299
+  _globals['_MODELDETAILRESPONSE']._serialized_end=337
+  _globals['_MASTERSERVICE']._serialized_start=340
+  _globals['_MASTERSERVICE']._serialized_end=556
 # @@protoc_insertion_point(module_scope)

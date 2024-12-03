@@ -32,7 +32,7 @@ def get_result(request_id):
     with grpc.insecure_channel('localhost:50051') as channel:
         stub = image_processing_pb2_grpc.MasterServiceStub(channel)
         try:
-            response = stub.GetResult(image_processing_pb2.ResultRequest(request_id=request_id))
+            response = stub.QueryResult(image_processing_pb2.ResultRequest(request_id=request_id))
             if response.result_available:
                 print(f"Result for Request ID {request_id}: {response.result}")
             else:
@@ -48,7 +48,7 @@ def list_models():
     with grpc.insecure_channel('localhost:50051') as channel:
         stub = image_processing_pb2_grpc.MasterServiceStub(channel)
         try:
-            response = stub.ListModels(image_processing_pb2.ModelListRequest())
+            response = stub.GetModels(image_processing_pb2.ModelRequest())
             print("Available Models:")
             for model in response.models:
                 print(f"- {model}")
