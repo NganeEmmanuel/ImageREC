@@ -1,40 +1,89 @@
 syntax = "proto3";
 
 service MasterService {
-    rpc ProcessImage (ImageRequest) returns (ImageResponse);   // Existing
-    rpc QueryResult (ResultRequest) returns (ResultResponse); // Fetch results
-    rpc GetModels (ModelRequest) returns (ModelResponse);     // List models
-    rpc GetModelDetails (ModelDetailRequest) returns (ModelDetailResponse); // Model details
+    // Handles incoming image requests
+    rpc ProcessImage (ImageRequest) returns (ImageResponse);
+
+    // Queries the result of a previously processed image
+    rpc QueryResult (QueryRequest) returns (ResultResponse);
+
+    // Fetches the list of available models
+    rpc GetModels (ModelRequest) returns (stream ModelInfo);
+
+    // Fetches details about a specific model
+    rpc GetModelDetails (ModelDetailRequest) returns (ModelDetail);
 }
 
+service WorkerService {
+    // Processes a chunk of data
+    rpc ProcessChunk (ChunkRequest) returns (ChunkResponse);
+
+    // Health check for worker readiness
+    rpc HealthCheck (HealthRequest) returns (HealthResponse);
+}
+
+// Request for processing an image
 message ImageRequest {
-    bytes image_data = 1;
-    string user_id = 2;  // User ID for multitenancy
+    bytes image_data = 1;  // The image data in bytes
 }
 
+// Response containing the request ID for tracking
 message ImageResponse {
-    string request_id = 1;  // Request ID returned to the client
+    string request_id = 1;  // Unique ID for the request
 }
 
-message ResultRequest {
-    string request_id = 1;  // Request ID to fetch results
+// Request for querying the result of an image
+message QueryRequest {
+    string request_id = 1;  // The request ID to query
 }
 
+// Response containing the status and result of a query
 message ResultResponse {
-    string status = 1;      // Processing status: PENDING, COMPLETED, FAILED
-    string result = 2;      // JSON or descriptive result
+    string status = 1;  // Status of the request (e.g., pending, completed, failed)
+    string result = 2;  // Result of the processed image (JSON string)
 }
 
-message ModelRequest {}
-
-message ModelResponse {
-    repeated string model_names = 1; // List of available models
+// Request to fetch available models
+message ModelRequest {
+    // No fields required
 }
 
+// Response streaming available model information
+message ModelInfo {
+    string model_name = 1;      // Name of the model
+    string description = 2;    // Description of the model
+    double accuracy = 3;       // Accuracy of the model
+}
+
+// Request to fetch details about a specific model
 message ModelDetailRequest {
-    string model_name = 1;
+    string model_name = 1;  // Name of the model to fetch details for
 }
 
-message ModelDetailResponse {
-    string details = 1; // Model-specific details
+// Response with detailed information about the model
+message ModelDetail {
+    string model_name = 1;      // Name of the model
+    string description = 2;    // Description of the model
+    double accuracy = 3;       // Accuracy of the model
+}
+
+// Request to process a chunk of image data
+message ChunkRequest {
+    bytes chunk_data = 1;  // Binary data for the chunk
+}
+
+// Response from the worker for the processed chunk
+message ChunkResponse {
+    string result = 1;       // Result of the processing (JSON string)
+    string worker_id = 2;    // ID of the worker that processed the chunk
+}
+
+// Request for health check
+message HealthRequest {
+    // No fields for basic health check
+}
+
+// Response for health check
+message HealthResponse {
+    string status = 1;  // Health status message (e.g., "ready", "unavailable")
 }
