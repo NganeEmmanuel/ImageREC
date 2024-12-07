@@ -32,11 +32,11 @@ def get_result(request_id):
     with grpc.insecure_channel('localhost:50051') as channel:
         stub = image_processing_pb2_grpc.MasterServiceStub(channel)
         try:
-            response = stub.QueryResult(image_processing_pb2.ResultRequest(request_id=request_id))
-            if response.result_available:
+            response = stub.QueryResult(image_processing_pb2.QueryRequest(request_id=request_id))
+            if response.status == "completed":
                 print(f"Result for Request ID {request_id}: {response.result}")
             else:
-                print(f"Result not yet available for Request ID {request_id}.")
+                print(f"Request ID {request_id} is still processing. Status: {response.status}")
         except grpc.RpcError as e:
             print(f"Error fetching result: {str(e)}")
 

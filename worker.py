@@ -1,98 +1,120 @@
+import sys
 import grpc
+import json
 from concurrent import futures
+from PIL import Image
+import io
 import time
+import torch  # YOLOv5 requires PyTorch
+
 import image_processing_pb2
 import image_processing_pb2_grpc
-import torch
-import cv2
-import numpy as np
-import json  # Import for JSON serialization
 
-# WorkerServiceServicer implements the gRPC service defined in the protobuf file
+
 class WorkerServiceServicer(image_processing_pb2_grpc.WorkerServiceServicer):
-    def __init__(self):
+    """
+    Implements the WorkerService, handling image processing tasks
+    and providing health checks.
+    """
+
+    def __init__(self, worker_id, model_path="yolov5s.pt"):
         """
-        Initialize the worker service by loading a pre-trained YOLOv5 model for object detection.
-        This model is small and efficient, suitable for handling images in real-time.
+        Initialize the worker with a YOLOv5 model instance.
+
+        Args:
+            worker_id: Unique identifier for the worker.
+            model_path: Path to the YOLOv5 model.
         """
-        self.model = torch.hub.load('ultralytics/yolov5', 'yolov5s')  # Load YOLOv5 small model
+        self.worker_id = worker_id
+        print(f"Loading YOLOv5 model for worker {worker_id}...")
+        # Loading the YOLOv5 model from cache or from the provided path
+        try:
+            self.model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_path)
+            print(f"Worker {worker_id} initialized with model {model_path}.")
+        except Exception as e:
+            print(f"Error loading model: {e}")
+            sys.exit(1)
 
     def ProcessChunk(self, request, context):
         """
-        Processes a chunk of image data sent by the master server.
-        Performs object detection using YOLOv5 and returns the results.
+        Processes a chunk of image data and returns the result.
 
         Args:
-            request (ChunkRequest): Contains the byte-encoded image data to process.
-            context (grpc.ServicerContext): Provides RPC-specific information.
+            request: ChunkRequest containing chunk data.
+            context: gRPC context.
 
         Returns:
-            ChunkResponse: Contains JSON-serialized detection results and the worker's ID.
+            ChunkResponse with the result of processing.
         """
-        # Decode the byte data into an image
-        image_data = np.frombuffer(request.chunk_data, dtype=np.uint8)
-        image = cv2.imdecode(image_data, cv2.IMREAD_COLOR)
+        print("Processing chunk...")
+        try:
+            # Load image from the received bytes
+            image_data = request.chunk_data
+            image = Image.open(io.BytesIO(image_data))
 
-        # Perform object detection using YOLOv5
-        results = self.model(image)
+            # Use YOLOv5 to process the image
+            results = self.model(image)
+            detections = results.pandas().xyxy[0].to_dict(orient="records")
 
-        # Parse the detection results
-        detections = []
-        for *box, conf, cls in results.xyxy[0].tolist():  # Bounding box, confidence, and class
-            detections.append({
-                "class": self.model.names[int(cls)],  # Convert class index to class name
-                "bounding_box": [int(box[0]), int(box[1]), int(box[2]), int(box[3])],  # [x1, y1, x2, y2]
-                "confidence": float(conf)  # Convert confidence to float
-            })
+            # Return results as JSON
+            result_json = json.dumps(detections)
+            return image_processing_pb2.ChunkResponse(result=result_json, worker_id=self.worker_id)
 
-        # Log the processed results
-        print(f"Processed chunk with {len(detections)} detections: {detections}")
-
-        # Return the results as a JSON string in the response
-        return image_processing_pb2.ChunkResponse(
-            result=json.dumps(detections),  # Serialize detections to a JSON string
-            worker_id=f"Worker-{context.peer()}"  # Use the client information for worker identification
-        )
+        except Exception as e:
+            error_msg = f"Error processing chunk: {e}"
+            context.set_details(error_msg)
+            context.set_code(grpc.StatusCode.INTERNAL)
+            return image_processing_pb2.ChunkResponse(result="{}", worker_id=self.worker_id)
 
     def HealthCheck(self, request, context):
         """
-        Responds to health check requests from the master server.
-        Used to confirm that the worker is operational.
+        Responds to health check requests.
 
         Args:
-            request (HealthRequest): A simple health check request.
-            context (grpc.ServicerContext): Provides RPC-specific information.
+            request: HealthRequest (no fields required).
+            context: gRPC context.
 
         Returns:
-            HealthResponse: Indicates the worker's health status.
+            HealthResponse indicating the worker's status.
         """
-        return image_processing_pb2.HealthResponse(status="Healthy")
+        return image_processing_pb2.HealthResponse(status="ready")
 
-def serve(port):
+
+def serve(worker_port, worker_id, model_path):
     """
-    Starts the gRPC server for the worker service on the specified port.
+    Starts the gRPC server for the worker.
 
     Args:
-        port (str): The port on which the worker service will listen for requests.
+        worker_port: Port on which the worker listens.
+        worker_id: Unique identifier for the worker.
+        model_path: Path to the YOLOv5 model.
     """
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))  # Allow up to 10 threads for handling RPCs
-    image_processing_pb2_grpc.add_WorkerServiceServicer_to_server(WorkerServiceServicer(), server)
-    server.add_insecure_port(f'[::]:{port}')  # Listen on all interfaces at the specified port
-    print(f"Worker server started on port {port}")
+    # Set up the gRPC server with a thread pool
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=4))  # Increase max_workers for concurrency
+    image_processing_pb2_grpc.add_WorkerServiceServicer_to_server(
+        WorkerServiceServicer(worker_id, model_path), server
+    )
 
-    # Start the server and keep it running
+    server_address = f"[::]:{worker_port}"
+    server.add_insecure_port(server_address)
+    print(f"Worker {worker_id} started at {server_address}")
     server.start()
+
     try:
         while True:
-            time.sleep(86400)  # Keep the server running indefinitely (1 day in seconds)
+            time.sleep(86400)  # Keep running indefinitely
     except KeyboardInterrupt:
-        server.stop(0)  # Gracefully stop the server on keyboard interruption
+        print(f"Worker {worker_id} shutting down.")
+        server.stop(0)
+
 
 if __name__ == "__main__":
-    import sys
-    if len(sys.argv) != 2:
-        print("Usage: python worker.py <port>")  # Notify user of correct usage
-        sys.exit(1)  # Exit with error code if port is not provided
+    # Parse the port, worker ID, and model path from command-line arguments
+    if len(sys.argv) < 4:
+        print("Usage: python worker.py <port> <worker_id> <model_path>")
+        sys.exit(1)
 
-    # Start the worker server with the specified port
-    serve(port=sys.argv[1])
+    port = int(sys.argv[1])
+    worker_id = sys.argv[2]
+    model_path = sys.argv[3]
+    serve(port, worker_id, model_path)
