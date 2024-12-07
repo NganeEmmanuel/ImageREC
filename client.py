@@ -1,8 +1,48 @@
 import argparse
 import grpc
+import configparser
 import image_processing_pb2
 import image_processing_pb2_grpc
-import sys
+
+CONFIG_FILE = "auth_config.ini"
+
+
+def initialize_config():
+    """
+    Initializes the configuration file if it doesn't exist.
+    """
+    config = configparser.ConfigParser()
+    if not config.read(CONFIG_FILE):  # Check if the file exists and can be read
+        config['User'] = {
+            'username': '',
+            'email': '',
+            'password': ''
+        }
+        with open(CONFIG_FILE, 'w') as configfile:
+            config.write(configfile)
+
+
+def configure_user(username=None, email=None, password=None):
+    """
+    Configures the user credentials in the configuration file.
+    """
+    config = configparser.ConfigParser()
+    config.read(CONFIG_FILE)
+
+    if 'User' not in config:
+        config['User'] = {}
+
+    if username:
+        config['User']['username'] = username
+    if email:
+        config['User']['email'] = email
+    if password:
+        config['User']['password'] = password
+
+    with open(CONFIG_FILE, 'w') as configfile:
+        config.write(configfile)
+
+    print("User configuration updated successfully.")
 
 
 def detect_image(image_path):
@@ -71,8 +111,16 @@ def model_details(model_name):
 
 
 def main():
+    initialize_config()
+
     parser = argparse.ArgumentParser(description="Client for image recognition.")
     subparsers = parser.add_subparsers(dest="command", help="Commands")
+
+    # Configure user command
+    configure_parser = subparsers.add_parser("configure", help="Configure user credentials")
+    configure_parser.add_argument("-u", "--username", type=str, help="Username")
+    configure_parser.add_argument("-e", "--email", type=str, help="Email")
+    configure_parser.add_argument("-p", "--password", type=str, help="Password")
 
     # Detect command
     detect_parser = subparsers.add_parser("detect", help="Detect objects in an image")
@@ -93,7 +141,9 @@ def main():
     args = parser.parse_args()
 
     # Execute commands
-    if args.command == "detect":
+    if args.command == "configure":
+        configure_user(username=args.username, email=args.email, password=args.password)
+    elif args.command == "detect":
         detect_image(args.image_path)
     elif args.command == "result":
         get_result(args.request_id)

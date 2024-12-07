@@ -12,6 +12,7 @@ from PIL import Image
 import io
 import warnings
 
+import auth
 import image_processing_pb2
 import image_processing_pb2_grpc
 
@@ -181,6 +182,11 @@ class MasterServiceServicer(image_processing_pb2_grpc.MasterServiceServicer):
 
 # Threads
 def process_requests():
+    # Before processing a request
+    if not auth.authenticate_user():
+        print("Authentication failed. Request denied.")
+        return
+
     while True:
         # Wait for a request from the queue
         request_id, image_data = request_queue.get()
@@ -242,6 +248,9 @@ def monitor_workers():
 
 
 def serve():
+    # Call this at the start of the application
+    # auth.initialize_config()
+
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     image_processing_pb2_grpc.add_MasterServiceServicer_to_server(MasterServiceServicer(), server)
     server.add_insecure_port('[::]:50051')
