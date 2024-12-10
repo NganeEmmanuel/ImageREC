@@ -210,7 +210,7 @@ def process_requests():
                     response = stub.ProcessChunk(image_processing_pb2.ChunkRequest(chunk_data=image_data))
                     print(f"Worker {worker_address} processed chunk successfully.")
                     # Inside the process_requests function, after receiving the response:
-                    print(f"Worker {worker_address} returned detections: {response.result}")
+                    # print(f"Worker {worker_address} returned detections: {response.result}")
 
                     all_detections.extend(json.loads(response.result))
                     with worker_lock:
