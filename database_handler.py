@@ -60,18 +60,29 @@ def add_result(request_id, result, user_email):
 
 
 def get_result_by_request_id(request_id):
-    """Retrieve the result associated with a specific request ID."""
-    conn = db_config.create_connection()
-    if not conn:
-        return None
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT result FROM results WHERE request_id = %s
-    """, (request_id,))
-    result = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    return result[0] if result else None
+    """Retrieve the result associated with a specific request ID.
+        Fetches the processing result for a given request_id from the database.
+    """
+    connection = db_config.create_connection()
+    if not connection:
+        raise Exception("Database connection failed.")
+
+    query = "SELECT result FROM results WHERE request_id = %s"
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute(query, (request_id,))
+        row = cursor.fetchone()  # Fetch the first result
+        # Ensure the cursor is cleared of unread results
+        cursor.fetchall()  # Clears any remaining results, if applicable
+        return row[0] if row else None
+    except Exception as e:
+        print(f"Error retrieving result from database: {e}")
+        raise
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
 
 
 def delete_request(request_id):

@@ -38,6 +38,7 @@ available_models = {
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
+
 def check_worker_ready(worker_address, timeout=10):
     """
     Waits for a worker to signal readiness by sending a HealthCheck.
@@ -170,13 +171,27 @@ class MasterServiceServicer(image_processing_pb2_grpc.MasterServiceServicer):
 
     def QueryResult(self, request, context):
         request_id = request.request_id
+
+        # First, check the in-memory state for faster access
         with state_lock:
-            if request_id not in request_state:
+            if request_id in request_state:
+                state = request_state[request_id]
+                return image_processing_pb2.ResultResponse(
+                    status=state["status"],
+                    result=json.dumps(state["result"]) if state["result"] else ""
+                )
+
+        # If not in memory, check the database
+        try:
+            result = database_handler.get_result_by_request_id(request_id)
+            if result:
+                return image_processing_pb2.ResultResponse(status="completed", result=result)
+            else:
                 return image_processing_pb2.ResultResponse(status="not_found", result="Request ID not found.")
-            state = request_state[request_id]
-        return image_processing_pb2.ResultResponse(
-            status=state["status"], result=json.dumps(state["result"]) if state["result"] else ""
-        )
+        except Exception as e:
+            print(f"Error retrieving result from database for Request ID {request_id}: {e}")
+            return image_processing_pb2.ResultResponse(status="error",
+                                                       result="An error occurred while fetching the result.")
 
     def HealthCheck(self, request, context):
         return image_processing_pb2.HealthResponse(status="healthy")
@@ -184,14 +199,13 @@ class MasterServiceServicer(image_processing_pb2_grpc.MasterServiceServicer):
 
 # Threads
 def process_requests():
-
     while True:
         # Wait for a request from the queue
         request_id, image_data, user_credentials = request_queue.get()
 
-        # Before processing a request
+        # Authenticate user before processing
         if not auth.authenticate_user(
-                user_credentials.username, user_credentials.email, user_credentials.password
+            user_credentials.username, user_credentials.email, user_credentials.password
         ):
             print("Authentication failed. Request denied.")
             return
@@ -210,22 +224,27 @@ def process_requests():
         while worker_count < len(worker_registry) and not available_workers.empty():
             worker_address = available_workers.get()
             print(f"Assigning task to worker {worker_address}...")
+
             try:
                 with grpc.insecure_channel(worker_address) as channel:
                     stub = image_processing_pb2_grpc.WorkerServiceStub(channel)
                     response = stub.ProcessChunk(image_processing_pb2.ChunkRequest(chunk_data=image_data))
                     print(f"Worker {worker_address} processed chunk successfully.")
-                    # Inside the process_requests function, after receiving the response:
-                    # print(f"Worker {worker_address} returned detections: {response.result}")
 
+                    # Append worker results to all_detections
                     all_detections.extend(json.loads(response.result))
-                    database_handler.add_result(request_id, response.result, user_credentials.email)
+
+                    # Update worker activity
                     with worker_lock:
                         worker_registry[worker_address]["last_active"] = time.time()
                     available_workers.put(worker_address)
                 worker_count += 1
             except Exception as e:
                 print(f"Worker {worker_address} failed: {e}")
+
+        # Combine and store results after all worker nodes have responded
+        combined_result = json.dumps(all_detections)
+        database_handler.add_result(request_id, combined_result, user_credentials.email)
 
         # Generate descriptions after processing is complete
         image = Image.open(io.BytesIO(image_data))
@@ -238,6 +257,7 @@ def process_requests():
 
         # Remove the request from the queue (request processing is done)
         request_queue.task_done()
+
 
 
 def monitor_workers():
