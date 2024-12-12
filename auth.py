@@ -47,17 +47,11 @@ def register_user(username, email, password):
             connection.close()
 
 
-def authenticate_user():
+def authenticate_user(username, email, password):
     """
     Authenticates the user based on the config file and database.
     If the user doesn't exist, it registers the user and authenticates.
     """
-    config = configparser.ConfigParser()
-    config.read(CONFIG_FILE)
-
-    username = config['User']['username']
-    email = config['User']['email']
-    password = config['User']['password']
 
     if not username or not email or not password:
         print("Error: Configure email, username, and password.")

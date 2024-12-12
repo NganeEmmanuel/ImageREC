@@ -22,9 +22,17 @@ service WorkerService {
     rpc HealthCheck (HealthRequest) returns (HealthResponse);
 }
 
+// Common message for user credentials
+message UserCredentials {
+    string email = 1;
+    string username = 2;
+    string password = 3;
+}
+
 // Request for processing an image
 message ImageRequest {
-    bytes image_data = 1;  // The image data in bytes
+    UserCredentials user = 1;  // User information for authentication
+    bytes image_data = 2;      // The image data in bytes
 }
 
 // Response containing the request ID for tracking
@@ -34,7 +42,8 @@ message ImageResponse {
 
 // Request for querying the result of an image
 message QueryRequest {
-    string request_id = 1;  // The request ID to query
+    UserCredentials user = 1;  // User information for authentication
+    string request_id = 2;     // The request ID to query
 }
 
 // Response containing the status and result of a query
@@ -45,7 +54,7 @@ message ResultResponse {
 
 // Request to fetch available models
 message ModelRequest {
-    // No fields required
+    UserCredentials user = 1;  // User information for authentication
 }
 
 // Response streaming available model information
@@ -57,7 +66,8 @@ message ModelInfo {
 
 // Request to fetch details about a specific model
 message ModelDetailRequest {
-    string model_name = 1;  // Name of the model to fetch details for
+    UserCredentials user = 1;  // User information for authentication
+    string model_name = 2;     // Name of the model to fetch details for
 }
 
 // Response with detailed information about the model

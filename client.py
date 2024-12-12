@@ -45,6 +45,23 @@ def configure_user(username=None, email=None, password=None):
     print("User configuration updated successfully.")
 
 
+def get_user_credentials():
+    """
+    Reads user credentials from the configuration file.
+    """
+    config = configparser.ConfigParser()
+    config.read(CONFIG_FILE)
+
+    if 'User' not in config:
+        raise ValueError("User credentials are not configured. Please configure them using the 'configure' command.")
+
+    return image_processing_pb2.UserCredentials(
+        username=config['User']['username'],
+        email=config['User']['email'],
+        password=config['User']['password']
+    )
+
+
 def detect_image(image_path):
     """
     Sends an image to the master for processing and returns a request ID.
@@ -56,10 +73,14 @@ def detect_image(image_path):
         print(f"Error: File '{image_path}' not found.")
         return
 
+    user_credentials = get_user_credentials()
+
     with grpc.insecure_channel('localhost:50051') as channel:
         stub = image_processing_pb2_grpc.MasterServiceStub(channel)
         try:
-            response = stub.ProcessImage(image_processing_pb2.ImageRequest(image_data=image_data))
+            response = stub.ProcessImage(
+                image_processing_pb2.ImageRequest(user=user_credentials, image_data=image_data)
+            )
             print(f"Request submitted. Request ID: {response.request_id}")
         except grpc.RpcError as e:
             print(f"Error communicating with master: {str(e)}")
@@ -69,10 +90,14 @@ def get_result(request_id):
     """
     Fetches the result of a processed request using the request ID.
     """
+    user_credentials = get_user_credentials()
+
     with grpc.insecure_channel('localhost:50051') as channel:
         stub = image_processing_pb2_grpc.MasterServiceStub(channel)
         try:
-            response = stub.QueryResult(image_processing_pb2.QueryRequest(request_id=request_id))
+            response = stub.QueryResult(
+                image_processing_pb2.QueryRequest(user=user_credentials, request_id=request_id)
+            )
             if response.status == "completed":
                 print(f"Result for Request ID {request_id}: {response.result}")
             else:
@@ -85,10 +110,14 @@ def list_models():
     """
     Lists all available models on the server.
     """
+    user_credentials = get_user_credentials()
+
     with grpc.insecure_channel('localhost:50051') as channel:
         stub = image_processing_pb2_grpc.MasterServiceStub(channel)
         try:
-            response = stub.GetModels(image_processing_pb2.ModelRequest())
+            response = stub.GetModels(
+                image_processing_pb2.ModelRequest(user=user_credentials)
+            )
             print("Available Models:")
             for model in response.models:
                 print(f"- {model}")
@@ -100,10 +129,14 @@ def model_details(model_name):
     """
     Fetches details of a specific model.
     """
+    user_credentials = get_user_credentials()
+
     with grpc.insecure_channel('localhost:50051') as channel:
         stub = image_processing_pb2_grpc.MasterServiceStub(channel)
         try:
-            response = stub.GetModelDetails(image_processing_pb2.ModelDetailRequest(model_name=model_name))
+            response = stub.GetModelDetails(
+                image_processing_pb2.ModelDetailRequest(user=user_credentials, model_name=model_name)
+            )
             print(f"Details for Model '{model_name}':")
             print(response.details)
         except grpc.RpcError as e:
@@ -111,8 +144,6 @@ def model_details(model_name):
 
 
 def main():
-    initialize_config()
-
     parser = argparse.ArgumentParser(description="Client for image recognition.")
     subparsers = parser.add_subparsers(dest="command", help="Commands")
 
@@ -140,7 +171,6 @@ def main():
     # Parse arguments
     args = parser.parse_args()
 
-    # Execute commands
     if args.command == "configure":
         configure_user(username=args.username, email=args.email, password=args.password)
     elif args.command == "detect":

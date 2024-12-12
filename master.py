@@ -13,6 +13,7 @@ import io
 import warnings
 
 import auth
+import database_handler
 import image_processing_pb2
 import image_processing_pb2_grpc
 
@@ -162,7 +163,8 @@ class MasterServiceServicer(image_processing_pb2_grpc.MasterServiceServicer):
         request_id = str(uuid4())
         with state_lock:
             request_state[request_id] = {"status": "pending", "result": None}
-        request_queue.put((request_id, request.image_data))
+        request_queue.put((request_id, request.image_data, request.user))
+        database_handler.add_request(request_id, request.user.email)
         print(f"Request {request_id} added to the queue.")
         return image_processing_pb2.ImageResponse(request_id=request_id)
 
@@ -182,14 +184,18 @@ class MasterServiceServicer(image_processing_pb2_grpc.MasterServiceServicer):
 
 # Threads
 def process_requests():
-    # Before processing a request
-    if not auth.authenticate_user():
-        print("Authentication failed. Request denied.")
-        return
 
     while True:
         # Wait for a request from the queue
-        request_id, image_data = request_queue.get()
+        request_id, image_data, user_credentials = request_queue.get()
+
+        # Before processing a request
+        if not auth.authenticate_user(
+                user_credentials.username, user_credentials.email, user_credentials.password
+        ):
+            print("Authentication failed. Request denied.")
+            return
+
         print(f"Processing request {request_id}...")
 
         # Dynamically scale workers
@@ -213,6 +219,7 @@ def process_requests():
                     # print(f"Worker {worker_address} returned detections: {response.result}")
 
                     all_detections.extend(json.loads(response.result))
+                    database_handler.add_result(request_id, response.result, user_credentials.email)
                     with worker_lock:
                         worker_registry[worker_address]["last_active"] = time.time()
                     available_workers.put(worker_address)
