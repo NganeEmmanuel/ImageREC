@@ -188,6 +188,52 @@ class MasterServiceServicer(image_processing_pb2_grpc.MasterServiceServicer):
 
         return image_processing_pb2.ImageResponse(request_id=request_id)
 
+    def ReprocessImage(self, request, context):
+        # Extract request details
+        request_id = request.request_id
+        user_credentials = request.user
+
+        # Authenticate the user
+        if not auth.authenticate_user(
+                user_credentials.username, user_credentials.email, user_credentials.password
+        ):
+            return image_processing_pb2.ReprocessResultResponse(
+                status="failed",
+                result=f"Authentication failed for user: {user_credentials.email}"
+            )
+
+        # Locate the image in the filesystem
+        image_path = os.path.join(IMAGE_STORAGE_DIR, f"{request_id}.jpg")
+        if not os.path.exists(image_path):
+            return image_processing_pb2.ReprocessResultResponse(
+                status="failed",
+                result=f"No existing request found with ID: {request_id}"
+            )
+
+        # Read the image and convert it to bytes
+        try:
+            with open(image_path, "rb") as image_file:
+                image_data = image_file.read()
+        except Exception as e:
+            print(f"Failed to read image: {e}")
+            return image_processing_pb2.ReprocessResultResponse(
+                status="failed",
+                result="Error occurred while reading the stored image."
+            )
+
+        # Add the reprocessing request to the queue
+        new_request_id = str(uuid4())  # Create a new request ID for tracking
+        with state_lock:
+            request_state[new_request_id] = {"status": "pending", "result": None}
+        request_queue.put((new_request_id, image_data, user_credentials))
+        database_handler.add_request(new_request_id, user_credentials.email)
+        print(f"Reprocessing request {new_request_id} added to the queue.")
+
+        return image_processing_pb2.ReprocessResultResponse(
+            status="success",
+            result=new_request_id
+        )
+
     def QueryResult(self, request, context):
         request_id = request.request_id
 

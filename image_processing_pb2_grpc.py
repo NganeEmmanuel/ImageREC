@@ -39,6 +39,11 @@ class MasterServiceStub(object):
                 request_serializer=image__processing__pb2.ImageRequest.SerializeToString,
                 response_deserializer=image__processing__pb2.ImageResponse.FromString,
                 _registered_method=True)
+        self.ReprocessImage = channel.unary_unary(
+                '/MasterService/ReprocessImage',
+                request_serializer=image__processing__pb2.ReprocessRequest.SerializeToString,
+                response_deserializer=image__processing__pb2.ReprocessResultResponse.FromString,
+                _registered_method=True)
         self.QueryResult = channel.unary_unary(
                 '/MasterService/QueryResult',
                 request_serializer=image__processing__pb2.QueryRequest.SerializeToString,
@@ -61,6 +66,13 @@ class MasterServiceServicer(object):
 
     def ProcessImage(self, request, context):
         """Handles incoming image requests
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ReprocessImage(self, request, context):
+        """Handles incoming image reprocessing requests
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -94,6 +106,11 @@ def add_MasterServiceServicer_to_server(servicer, server):
                     servicer.ProcessImage,
                     request_deserializer=image__processing__pb2.ImageRequest.FromString,
                     response_serializer=image__processing__pb2.ImageResponse.SerializeToString,
+            ),
+            'ReprocessImage': grpc.unary_unary_rpc_method_handler(
+                    servicer.ReprocessImage,
+                    request_deserializer=image__processing__pb2.ReprocessRequest.FromString,
+                    response_serializer=image__processing__pb2.ReprocessResultResponse.SerializeToString,
             ),
             'QueryResult': grpc.unary_unary_rpc_method_handler(
                     servicer.QueryResult,
@@ -138,6 +155,33 @@ class MasterService(object):
             '/MasterService/ProcessImage',
             image__processing__pb2.ImageRequest.SerializeToString,
             image__processing__pb2.ImageResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ReprocessImage(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/MasterService/ReprocessImage',
+            image__processing__pb2.ReprocessRequest.SerializeToString,
+            image__processing__pb2.ReprocessResultResponse.FromString,
             options,
             channel_credentials,
             insecure,

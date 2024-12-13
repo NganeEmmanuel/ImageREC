@@ -44,6 +44,22 @@ class ResultResponse(_message.Message):
     result: str
     def __init__(self, status: _Optional[str] = ..., result: _Optional[str] = ...) -> None: ...
 
+class ReprocessRequest(_message.Message):
+    __slots__ = ("user", "request_id")
+    USER_FIELD_NUMBER: _ClassVar[int]
+    REQUEST_ID_FIELD_NUMBER: _ClassVar[int]
+    user: UserCredentials
+    request_id: str
+    def __init__(self, user: _Optional[_Union[UserCredentials, _Mapping]] = ..., request_id: _Optional[str] = ...) -> None: ...
+
+class ReprocessResultResponse(_message.Message):
+    __slots__ = ("status", "result")
+    STATUS_FIELD_NUMBER: _ClassVar[int]
+    RESULT_FIELD_NUMBER: _ClassVar[int]
+    status: str
+    result: str
+    def __init__(self, status: _Optional[str] = ..., result: _Optional[str] = ...) -> None: ...
+
 class ModelRequest(_message.Message):
     __slots__ = ("user",)
     USER_FIELD_NUMBER: _ClassVar[int]

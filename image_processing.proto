@@ -4,6 +4,9 @@ service MasterService {
     // Handles incoming image requests
     rpc ProcessImage (ImageRequest) returns (ImageResponse);
 
+    // Handles incoming image reprocessing requests
+    rpc ReprocessImage (ReprocessRequest) returns (ReprocessResultResponse);
+
     // Queries the result of a previously processed image
     rpc QueryResult (QueryRequest) returns (ResultResponse);
 
@@ -48,6 +51,18 @@ message QueryRequest {
 
 // Response containing the status and result of a query
 message ResultResponse {
+    string status = 1;  // Status of the request (e.g., pending, completed, failed)
+    string result = 2;  // Result of the processed image (JSON string)
+}
+
+// Request for reprocessing a a request already made
+message ReprocessRequest {
+    UserCredentials user = 1;  // User information for authentication
+    string request_id = 2;     // The request ID to query
+}
+
+// Response containing the status and result of a query
+message ReprocessResultResponse {
     string status = 1;  // Status of the request (e.g., pending, completed, failed)
     string result = 2;  // Result of the processed image (JSON string)
 }
