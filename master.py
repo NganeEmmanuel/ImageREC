@@ -31,6 +31,9 @@ request_queue = Queue()
 worker_lock = Lock()
 state_lock = Lock()
 
+# Define the directory for saving images
+IMAGE_STORAGE_DIR = os.path.join(os.getcwd(), "images")
+
 available_models = {
     "model_1": {"description": "Object detection model v1", "accuracy": 0.85},
     "model_2": {"description": "Object detection model v2", "accuracy": 0.90},
@@ -162,11 +165,27 @@ def generate_descriptions(detections, image_width, image_height):
 class MasterServiceServicer(image_processing_pb2_grpc.MasterServiceServicer):
     def ProcessImage(self, request, context):
         request_id = str(uuid4())
+
+        # Ensure the directory for image storage exists
+        os.makedirs(IMAGE_STORAGE_DIR, exist_ok=True)
+
+        # Save the image to the file system
+        image_path = os.path.join(IMAGE_STORAGE_DIR, f"{request_id}.jpg")
+        try:
+            with open(image_path, "wb") as image_file:
+                image_file.write(request.image_data)
+            print(f"Image saved at {image_path}.")
+        except Exception as e:
+            print(f"Failed to save image: {e}")
+            return image_processing_pb2.ImageResponse(request_id="" )
+
+        # Update request state and add to the queue
         with state_lock:
             request_state[request_id] = {"status": "pending", "result": None}
         request_queue.put((request_id, request.image_data, request.user))
         database_handler.add_request(request_id, request.user.email)
         print(f"Request {request_id} added to the queue.")
+
         return image_processing_pb2.ImageResponse(request_id=request_id)
 
     def QueryResult(self, request, context):
