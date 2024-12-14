@@ -14,6 +14,7 @@ import warnings
 
 import auth
 import database_handler
+from remote_object_handler import download_image
 import image_processing_pb2
 import image_processing_pb2_grpc
 
@@ -21,7 +22,7 @@ import image_processing_pb2_grpc
 BASE_WORKER_PORT = 50052
 MAX_WORKERS = 10
 MIN_WORKERS = 2
-WORKER_IDLE_TIMEOUT = 30
+WORKER_IDLE_TIMEOUT = 360
 
 # Global registries
 worker_registry = {}
@@ -177,7 +178,7 @@ class MasterServiceServicer(image_processing_pb2_grpc.MasterServiceServicer):
             print(f"Image saved at {image_path}.")
         except Exception as e:
             print(f"Failed to save image: {e}")
-            return image_processing_pb2.ImageResponse(request_id="" )
+            return image_processing_pb2.ImageResponse(request_id="")
 
         # Update request state and add to the queue
         with state_lock:
@@ -187,6 +188,78 @@ class MasterServiceServicer(image_processing_pb2_grpc.MasterServiceServicer):
         print(f"Request {request_id} added to the queue.")
 
         return image_processing_pb2.ImageResponse(request_id=request_id)
+
+    def ProcessRemoteImage(self, request, context):
+        """
+        Handles remote image processing requests.
+
+        Args:
+            request (RemoteImageRequest): The gRPC request containing user credentials and image URL.
+            context: The gRPC context.
+
+        Returns:
+            ImageResponse: A response containing the request ID or an error.
+        """
+        user = request.user
+        image_url = request.image_url
+        image_bytes = None
+
+        # Step 1: Authenticate user (Placeholder, implement actual authentication logic)
+        if not auth.authenticate_user(user.username, user.email, user.password):
+            context.abort(grpc.StatusCode.UNAUTHENTICATED, "Invalid user credentials.")
+
+        # Step 2: Generate a unique request ID
+        request_id = str(uuid4())
+
+        # Update the request state
+        with state_lock:
+            request_state[request_id] = {"status": "pending", "result": None}
+
+        # Step 3: Download the image
+        try:
+            os.makedirs(IMAGE_STORAGE_DIR, exist_ok=True)  # Ensure the storage directory exists
+            image_bytes = download_image(image_url, request_id, IMAGE_STORAGE_DIR)
+        except ValueError as e:
+            # Log error and update the result in the database
+            error_message = f"Failed to download image: {str(e)}"
+            with state_lock:
+                # Update the existing entry for the request_id
+                request_state[request_id]["status"] = "Failed"
+                request_state[request_id]["result"] = f"Processing failed: {error_message}"
+            database_handler.add_result(request_id, f"Processing failed: {error_message}", user.email)
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, error_message)
+        except Exception as e:
+            # Handle any unexpected errors
+            error_message = f"Unexpected error: {str(e)}"
+            with state_lock:
+                # Update the existing entry for the request_id
+                request_state[request_id]["status"] = "Failed"
+                request_state[request_id]["result"] = f"Processing failed: {error_message}"
+            database_handler.add_result(request_id, f"Processing failed: {error_message}", user.email)
+            context.abort(grpc.StatusCode.INTERNAL, error_message)
+
+        # Step 4: Add request to the database
+        try:
+            database_handler.add_request(request_id, user.email)
+        except Exception as e:
+            context.abort(grpc.StatusCode.INTERNAL, f"Database error: {str(e)}")
+
+        # Step 5: Queue the image for processing
+        try:
+            request_queue.put((request_id, image_bytes, user))
+            print(f"Request {request_id} added to the queue.")
+        except Exception as e:
+            error_message = f"Failed to queue image for processing: {str(e)}"
+            with state_lock:
+                # Update the existing entry for the request_id
+                request_state[request_id]["status"] = "Failed"
+                request_state[request_id]["result"] = f"Processing failed: {error_message}"
+            database_handler.add_result(request_id, f"Processing failed: {error_message}", user.email)
+            context.abort(grpc.StatusCode.INTERNAL, error_message)
+
+        # Step 6: Return the request ID
+        return image_processing_pb2.ImageResponse(request_id=request_id)
+
 
     def ReprocessImage(self, request, context):
         # Extract request details
@@ -203,7 +276,8 @@ class MasterServiceServicer(image_processing_pb2_grpc.MasterServiceServicer):
             )
 
         # Locate the image in the filesystem
-        image_path = os.path.join(IMAGE_STORAGE_DIR, f"{request_id}.jpg")
+        raw_image_path = os.path.join(IMAGE_STORAGE_DIR, f"{request_id}.jpg")
+        image_path = os.path.normpath(raw_image_path)  # Normalize the path to handle extra slashes
         if not os.path.exists(image_path):
             return image_processing_pb2.ReprocessResultResponse(
                 status="failed",
@@ -270,7 +344,7 @@ def process_requests():
 
         # Authenticate user before processing
         if not auth.authenticate_user(
-            user_credentials.username, user_credentials.email, user_credentials.password
+                user_credentials.username, user_credentials.email, user_credentials.password
         ):
             print("Authentication failed. Request denied.")
             return
@@ -322,7 +396,6 @@ def process_requests():
 
         # Remove the request from the queue (request processing is done)
         request_queue.task_done()
-
 
 
 def monitor_workers():

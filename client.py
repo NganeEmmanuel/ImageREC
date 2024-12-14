@@ -86,6 +86,23 @@ def detect_image(image_path):
             print(f"Error communicating with master: {str(e)}")
 
 
+def detect_remote_image(image_url):
+    """
+    Sends a remote image URL to the master for processing and returns a request ID.
+    """
+    user_credentials = get_user_credentials()
+
+    with grpc.insecure_channel('localhost:50051') as channel:
+        stub = image_processing_pb2_grpc.MasterServiceStub(channel)
+        try:
+            response = stub.ProcessRemoteImage(
+                image_processing_pb2.RemoteImageRequest(user=user_credentials, image_url=image_url)
+            )
+            print(f"Request submitted for remote image. Request ID: {response.request_id}")
+        except grpc.RpcError as e:
+            print(f"Error communicating with master: {str(e)}")
+
+
 def get_result(request_id):
     """
     Fetches the result of a processed request using the request ID.
@@ -143,6 +160,26 @@ def model_details(model_name):
             print(f"Error fetching model details: {str(e)}")
 
 
+def reprocess_request(request_id):
+    """
+    Sends a reprocessing request for an existing image.
+    """
+    user_credentials = get_user_credentials()
+
+    with grpc.insecure_channel('localhost:50051') as channel:
+        stub = image_processing_pb2_grpc.MasterServiceStub(channel)
+        try:
+            response = stub.ReprocessImage(
+                image_processing_pb2.ReprocessRequest(user=user_credentials, request_id=request_id)
+            )
+            if response.status == "success":
+                print(f"Reprocessing initiated. New Request ID: {response.result}")
+            else:
+                print(f"Reprocessing failed: {response.result}")
+        except grpc.RpcError as e:
+            print(f"Error communicating with master: {str(e)}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Client for image recognition.")
     subparsers = parser.add_subparsers(dest="command", help="Commands")
@@ -154,8 +191,11 @@ def main():
     configure_parser.add_argument("-p", "--password", type=str, help="Password")
 
     # Detect command
+    # Detect command
     detect_parser = subparsers.add_parser("detect", help="Detect objects in an image")
-    detect_parser.add_argument("image_path", type=str, help="Path to the image file")
+    detect_parser.add_argument("image_path", nargs="?", type=str,
+                               help="Path to the image file (optional if -r is used)")
+    detect_parser.add_argument("-r", "--remote", type=str, help="URL of the remote image")
 
     # Result command
     result_parser = subparsers.add_parser("result", help="Fetch the result of a request")
@@ -168,19 +208,30 @@ def main():
     model_parser = subparsers.add_parser("model", help="Get details of a specific model")
     model_parser.add_argument("model_name", type=str, help="Name of the model")
 
+    # Reprocess command
+    reprocess_parser = subparsers.add_parser("reprocess", help="Reprocess an existing request")
+    reprocess_parser.add_argument("request_id", type=str, help="Request ID to reprocess")
+
     # Parse arguments
     args = parser.parse_args()
 
     if args.command == "configure":
         configure_user(username=args.username, email=args.email, password=args.password)
     elif args.command == "detect":
-        detect_image(args.image_path)
+        if args.remote:
+            detect_remote_image(args.remote)
+        elif args.image_path:
+            detect_image(args.image_path)
+        else:
+            print("Error: Please provide an image path or use the -r flag for a remote image URL.")
     elif args.command == "result":
         get_result(args.request_id)
     elif args.command == "get models":
         list_models()
     elif args.command == "model":
         model_details(args.model_name)
+    elif args.command == "reprocess":
+        reprocess_request(args.request_id)
     else:
         parser.print_help()
 

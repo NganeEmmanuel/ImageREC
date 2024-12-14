@@ -1,8 +1,11 @@
 syntax = "proto3";
 
 service MasterService {
-    // Handles incoming image requests
+    // Handles incoming image requests for images on the client machine
     rpc ProcessImage (ImageRequest) returns (ImageResponse);
+
+    // Handles incoming image requests for remote images from a url
+    rpc ProcessRemoteImage (RemoteImageRequest) returns (ImageResponse);
 
     // Handles incoming image reprocessing requests
     rpc ReprocessImage (ReprocessRequest) returns (ReprocessResultResponse);
@@ -36,6 +39,12 @@ message UserCredentials {
 message ImageRequest {
     UserCredentials user = 1;  // User information for authentication
     bytes image_data = 2;      // The image data in bytes
+}
+
+// Request for processing an image
+message RemoteImageRequest {
+    UserCredentials user = 1;  // User information for authentication
+    string image_url = 2;      // The image data in bytes
 }
 
 // Response containing the request ID for tracking

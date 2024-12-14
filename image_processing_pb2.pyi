@@ -22,6 +22,14 @@ class ImageRequest(_message.Message):
     image_data: bytes
     def __init__(self, user: _Optional[_Union[UserCredentials, _Mapping]] = ..., image_data: _Optional[bytes] = ...) -> None: ...
 
+class RemoteImageRequest(_message.Message):
+    __slots__ = ("user", "image_url")
+    USER_FIELD_NUMBER: _ClassVar[int]
+    IMAGE_URL_FIELD_NUMBER: _ClassVar[int]
+    user: UserCredentials
+    image_url: str
+    def __init__(self, user: _Optional[_Union[UserCredentials, _Mapping]] = ..., image_url: _Optional[str] = ...) -> None: ...
+
 class ImageResponse(_message.Message):
     __slots__ = ("request_id",)
     REQUEST_ID_FIELD_NUMBER: _ClassVar[int]
