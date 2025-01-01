@@ -3,6 +3,7 @@ import grpc
 import configparser
 import image_processing_pb2
 import image_processing_pb2_grpc
+from tabulate import tabulate
 
 CONFIG_FILE = "auth_config.ini"
 
@@ -123,6 +124,44 @@ def get_result(request_id):
             print(f"Error fetching result: {str(e)}")
 
 
+def get_all_user_requests():
+    user_credentials = get_user_credentials()
+
+    with grpc.insecure_channel('localhost:50051') as channel:
+        stub = image_processing_pb2_grpc.MasterServiceStub(channel)
+        try:
+            responses = stub.GetAllUserRequest(
+                image_processing_pb2.UserCredentials(username=user_credentials.username, email=user_credentials.email, password=user_credentials.password)
+            )
+            data = []
+            for response in responses:
+                data.append([response.request_id, response.request_status, response.request_date])
+
+            if data:
+                print(tabulate(data, headers=["Request ID", "Status", "Request Date"], tablefmt="grid"))
+            else:
+                print("No requests found.")
+        except grpc.RpcError as e:
+            print(f"Error fetching user requests: {str(e)}")
+
+
+def delete_processing_request(request_id):
+    user_credentials = get_user_credentials()
+
+    with grpc.insecure_channel('localhost:50051') as channel:
+        stub = image_processing_pb2_grpc.MasterServiceStub(channel)
+        try:
+            response = stub.DeleteProcessingRequest(
+                image_processing_pb2.QueryRequest(
+                    user=user_credentials,
+                    request_id=request_id
+                )
+            )
+            print(f"Request ID {request_id} deleted successfully.")
+        except grpc.RpcError as e:
+            print(f"Error deleting request: {str(e)}")
+
+
 def list_models():
     """
     Lists all available models on the server.
@@ -173,9 +212,9 @@ def reprocess_request(request_id):
                 image_processing_pb2.ReprocessRequest(user=user_credentials, request_id=request_id)
             )
             if response.status == "success":
-                print(f"Reprocessing initiated. New Request ID: {response.result}")
+                print(f"Reprocessing initiated. New Request ID: {response.request_id}")
             else:
-                print(f"Reprocessing failed: {response.result}")
+                print(f"Reprocessing failed: {response.request_id}")
         except grpc.RpcError as e:
             print(f"Error communicating with master: {str(e)}")
 
@@ -190,7 +229,7 @@ def main():
     configure_parser.add_argument("-e", "--email", type=str, help="Email")
     configure_parser.add_argument("-p", "--password", type=str, help="Password")
 
-    # Detect command
+
     # Detect command
     detect_parser = subparsers.add_parser("detect", help="Detect objects in an image")
     detect_parser.add_argument("image_path", nargs="?", type=str,
@@ -202,7 +241,7 @@ def main():
     result_parser.add_argument("request_id", type=str, help="Request ID")
 
     # List models command
-    subparsers.add_parser("get models", help="List all available models")
+    subparsers.add_parser("get_models", help="List all available models")
 
     # Model details command
     model_parser = subparsers.add_parser("model", help="Get details of a specific model")
@@ -211,6 +250,13 @@ def main():
     # Reprocess command
     reprocess_parser = subparsers.add_parser("reprocess", help="Reprocess an existing request")
     reprocess_parser.add_argument("request_id", type=str, help="Request ID to reprocess")
+
+    # Get requests command
+    subparsers.add_parser("get_requests", help="List all user requests")
+
+    # Delete request command
+    delete_parser = subparsers.add_parser("delete_request", help="Delete a specific user request")
+    delete_parser.add_argument("request_id", type=str, help="Request ID to delete")
 
     # Parse arguments
     args = parser.parse_args()
@@ -226,7 +272,11 @@ def main():
             print("Error: Please provide an image path or use the -r flag for a remote image URL.")
     elif args.command == "result":
         get_result(args.request_id)
-    elif args.command == "get models":
+    elif args.command == "get_requests":
+        get_all_user_requests()
+    elif args.command == "delete_request":
+        delete_processing_request(args.request_id)
+    elif args.command == "get_models":
         list_models()
     elif args.command == "model":
         model_details(args.model_name)

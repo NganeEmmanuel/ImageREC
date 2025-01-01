@@ -44,6 +44,54 @@ def add_request(request_id, user_email):
     conn.close()
 
 
+def update_request_status(request_id, status):
+    """Update the status of a request in the database."""
+    conn = db_config.create_connection()
+    if not conn:
+        return
+    cursor = conn.cursor()
+    cursor.execute("""
+    UPDATE requests SET status = %s 
+    WHERE request_id = %s""", (status, request_id))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
+def get_all_requests(user_email):
+    """Get all requests in the database for a given user."""
+    conn = None
+    cursor = None
+    try:
+        conn = db_config.create_connection()
+        if not conn:
+            print("Failed to establish database connection.")
+            return []
+        cursor = conn.cursor(dictionary=True)  # Use dictionary cursor
+        cursor.execute("""
+        SELECT request_id, status, request_date FROM requests 
+        WHERE user_email = %s""", (user_email,))
+        results = cursor.fetchall()
+        print(f"Query results: {results}")
+        return results
+    except Exception as e:
+        print(f"Error fetching requests: {e}")
+        return []
+    finally:
+        if cursor:
+            try:
+                cursor.close()
+            except Exception as e:
+                print(f"Error closing cursor: {e}")
+        if conn:
+            try:
+                conn.close()
+            except Exception as e:
+                print(f"Error closing connection: {e}")
+
+
+
+
 def add_result(request_id, result, user_email):
     """Add a new result to the database."""
     conn = db_config.create_connection()
@@ -85,18 +133,19 @@ def get_result_by_request_id(request_id):
             connection.close()
 
 
-def delete_request(request_id):
+def delete_request(request_id, email):
     """Delete a request and its associated results from the database."""
     conn = db_config.create_connection()
     if not conn:
         return
     cursor = conn.cursor()
     cursor.execute("""
-        DELETE FROM requests WHERE request_id = %s
-    """, (request_id,))
+        DELETE FROM requests WHERE request_id = %s AND user_email = %s
+    """, (request_id, email))
     cursor.execute("""
-        DELETE FROM results WHERE request_id = %s
-    """, (request_id,))
+        DELETE FROM results WHERE request_id = %s AND user_email = %s
+    """, (request_id, email))
     conn.commit()
     cursor.close()
     conn.close()
+    return True

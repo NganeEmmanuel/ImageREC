@@ -36,13 +36,13 @@ class MasterServiceStub(object):
         """
         self.ProcessImage = channel.unary_unary(
                 '/MasterService/ProcessImage',
-                request_serializer=image__processing__pb2.ImageRequest.SerializeToString,
-                response_deserializer=image__processing__pb2.ImageResponse.FromString,
+                request_serializer=image__processing__pb2.ProcessImageRequest.SerializeToString,
+                response_deserializer=image__processing__pb2.ProcessImageResponse.FromString,
                 _registered_method=True)
         self.ProcessRemoteImage = channel.unary_unary(
                 '/MasterService/ProcessRemoteImage',
                 request_serializer=image__processing__pb2.RemoteImageRequest.SerializeToString,
-                response_deserializer=image__processing__pb2.ImageResponse.FromString,
+                response_deserializer=image__processing__pb2.ProcessImageResponse.FromString,
                 _registered_method=True)
         self.ReprocessImage = channel.unary_unary(
                 '/MasterService/ReprocessImage',
@@ -54,6 +54,11 @@ class MasterServiceStub(object):
                 request_serializer=image__processing__pb2.QueryRequest.SerializeToString,
                 response_deserializer=image__processing__pb2.ResultResponse.FromString,
                 _registered_method=True)
+        self.GetServices = channel.unary_unary(
+                '/MasterService/GetServices',
+                request_serializer=image__processing__pb2.EmptyRequest.SerializeToString,
+                response_deserializer=image__processing__pb2.GetServicesResponse.FromString,
+                _registered_method=True)
         self.GetModels = channel.unary_stream(
                 '/MasterService/GetModels',
                 request_serializer=image__processing__pb2.ModelRequest.SerializeToString,
@@ -63,6 +68,16 @@ class MasterServiceStub(object):
                 '/MasterService/GetModelDetails',
                 request_serializer=image__processing__pb2.ModelDetailRequest.SerializeToString,
                 response_deserializer=image__processing__pb2.ModelDetail.FromString,
+                _registered_method=True)
+        self.GetAllUserRequest = channel.unary_stream(
+                '/MasterService/GetAllUserRequest',
+                request_serializer=image__processing__pb2.UserCredentials.SerializeToString,
+                response_deserializer=image__processing__pb2.RequestDataRespond.FromString,
+                _registered_method=True)
+        self.DeleteProcessingRequest = channel.unary_unary(
+                '/MasterService/DeleteProcessingRequest',
+                request_serializer=image__processing__pb2.QueryRequest.SerializeToString,
+                response_deserializer=image__processing__pb2.ProcessImageResponse.FromString,
                 _registered_method=True)
 
 
@@ -97,6 +112,13 @@ class MasterServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetServices(self, request, context):
+        """RPC to list all available services or functionalities
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def GetModels(self, request, context):
         """Fetches the list of available models
         """
@@ -111,18 +133,32 @@ class MasterServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetAllUserRequest(self, request, context):
+        """Fetches all request details for a particular user
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def DeleteProcessingRequest(self, request, context):
+        """Deletes a request by a user by request_id
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_MasterServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'ProcessImage': grpc.unary_unary_rpc_method_handler(
                     servicer.ProcessImage,
-                    request_deserializer=image__processing__pb2.ImageRequest.FromString,
-                    response_serializer=image__processing__pb2.ImageResponse.SerializeToString,
+                    request_deserializer=image__processing__pb2.ProcessImageRequest.FromString,
+                    response_serializer=image__processing__pb2.ProcessImageResponse.SerializeToString,
             ),
             'ProcessRemoteImage': grpc.unary_unary_rpc_method_handler(
                     servicer.ProcessRemoteImage,
                     request_deserializer=image__processing__pb2.RemoteImageRequest.FromString,
-                    response_serializer=image__processing__pb2.ImageResponse.SerializeToString,
+                    response_serializer=image__processing__pb2.ProcessImageResponse.SerializeToString,
             ),
             'ReprocessImage': grpc.unary_unary_rpc_method_handler(
                     servicer.ReprocessImage,
@@ -134,6 +170,11 @@ def add_MasterServiceServicer_to_server(servicer, server):
                     request_deserializer=image__processing__pb2.QueryRequest.FromString,
                     response_serializer=image__processing__pb2.ResultResponse.SerializeToString,
             ),
+            'GetServices': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetServices,
+                    request_deserializer=image__processing__pb2.EmptyRequest.FromString,
+                    response_serializer=image__processing__pb2.GetServicesResponse.SerializeToString,
+            ),
             'GetModels': grpc.unary_stream_rpc_method_handler(
                     servicer.GetModels,
                     request_deserializer=image__processing__pb2.ModelRequest.FromString,
@@ -143,6 +184,16 @@ def add_MasterServiceServicer_to_server(servicer, server):
                     servicer.GetModelDetails,
                     request_deserializer=image__processing__pb2.ModelDetailRequest.FromString,
                     response_serializer=image__processing__pb2.ModelDetail.SerializeToString,
+            ),
+            'GetAllUserRequest': grpc.unary_stream_rpc_method_handler(
+                    servicer.GetAllUserRequest,
+                    request_deserializer=image__processing__pb2.UserCredentials.FromString,
+                    response_serializer=image__processing__pb2.RequestDataRespond.SerializeToString,
+            ),
+            'DeleteProcessingRequest': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteProcessingRequest,
+                    request_deserializer=image__processing__pb2.QueryRequest.FromString,
+                    response_serializer=image__processing__pb2.ProcessImageResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -170,8 +221,8 @@ class MasterService(object):
             request,
             target,
             '/MasterService/ProcessImage',
-            image__processing__pb2.ImageRequest.SerializeToString,
-            image__processing__pb2.ImageResponse.FromString,
+            image__processing__pb2.ProcessImageRequest.SerializeToString,
+            image__processing__pb2.ProcessImageResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -198,7 +249,7 @@ class MasterService(object):
             target,
             '/MasterService/ProcessRemoteImage',
             image__processing__pb2.RemoteImageRequest.SerializeToString,
-            image__processing__pb2.ImageResponse.FromString,
+            image__processing__pb2.ProcessImageResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -264,6 +315,33 @@ class MasterService(object):
             _registered_method=True)
 
     @staticmethod
+    def GetServices(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/MasterService/GetServices',
+            image__processing__pb2.EmptyRequest.SerializeToString,
+            image__processing__pb2.GetServicesResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
     def GetModels(request,
             target,
             options=(),
@@ -307,6 +385,60 @@ class MasterService(object):
             '/MasterService/GetModelDetails',
             image__processing__pb2.ModelDetailRequest.SerializeToString,
             image__processing__pb2.ModelDetail.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetAllUserRequest(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            '/MasterService/GetAllUserRequest',
+            image__processing__pb2.UserCredentials.SerializeToString,
+            image__processing__pb2.RequestDataRespond.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def DeleteProcessingRequest(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/MasterService/DeleteProcessingRequest',
+            image__processing__pb2.QueryRequest.SerializeToString,
+            image__processing__pb2.ProcessImageResponse.FromString,
             options,
             channel_credentials,
             insecure,

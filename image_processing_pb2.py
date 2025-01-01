@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16image_processing.proto\"D\n\x0fUserCredentials\x12\r\n\x05\x65mail\x18\x01 \x01(\t\x12\x10\n\x08username\x18\x02 \x01(\t\x12\x10\n\x08password\x18\x03 \x01(\t\"B\n\x0cImageRequest\x12\x1e\n\x04user\x18\x01 \x01(\x0b\x32\x10.UserCredentials\x12\x12\n\nimage_data\x18\x02 \x01(\x0c\"G\n\x12RemoteImageRequest\x12\x1e\n\x04user\x18\x01 \x01(\x0b\x32\x10.UserCredentials\x12\x11\n\timage_url\x18\x02 \x01(\t\"#\n\rImageResponse\x12\x12\n\nrequest_id\x18\x01 \x01(\t\"B\n\x0cQueryRequest\x12\x1e\n\x04user\x18\x01 \x01(\x0b\x32\x10.UserCredentials\x12\x12\n\nrequest_id\x18\x02 \x01(\t\"0\n\x0eResultResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x0e\n\x06result\x18\x02 \x01(\t\"F\n\x10ReprocessRequest\x12\x1e\n\x04user\x18\x01 \x01(\x0b\x32\x10.UserCredentials\x12\x12\n\nrequest_id\x18\x02 \x01(\t\"9\n\x17ReprocessResultResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x0e\n\x06result\x18\x02 \x01(\t\".\n\x0cModelRequest\x12\x1e\n\x04user\x18\x01 \x01(\x0b\x32\x10.UserCredentials\"F\n\tModelInfo\x12\x12\n\nmodel_name\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x10\n\x08\x61\x63\x63uracy\x18\x03 \x01(\x01\"H\n\x12ModelDetailRequest\x12\x1e\n\x04user\x18\x01 \x01(\x0b\x32\x10.UserCredentials\x12\x12\n\nmodel_name\x18\x02 \x01(\t\"H\n\x0bModelDetail\x12\x12\n\nmodel_name\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x10\n\x08\x61\x63\x63uracy\x18\x03 \x01(\x01\"\"\n\x0c\x43hunkRequest\x12\x12\n\nchunk_data\x18\x01 \x01(\x0c\"2\n\rChunkResponse\x12\x0e\n\x06result\x18\x01 \x01(\t\x12\x11\n\tworker_id\x18\x02 \x01(\t\"\x0f\n\rHealthRequest\" \n\x0eHealthResponse\x12\x0e\n\x06status\x18\x01 \x01(\t2\xc7\x02\n\rMasterService\x12-\n\x0cProcessImage\x12\r.ImageRequest\x1a\x0e.ImageResponse\x12\x39\n\x12ProcessRemoteImage\x12\x13.RemoteImageRequest\x1a\x0e.ImageResponse\x12=\n\x0eReprocessImage\x12\x11.ReprocessRequest\x1a\x18.ReprocessResultResponse\x12-\n\x0bQueryResult\x12\r.QueryRequest\x1a\x0f.ResultResponse\x12(\n\tGetModels\x12\r.ModelRequest\x1a\n.ModelInfo0\x01\x12\x34\n\x0fGetModelDetails\x12\x13.ModelDetailRequest\x1a\x0c.ModelDetail2n\n\rWorkerService\x12-\n\x0cProcessChunk\x12\r.ChunkRequest\x1a\x0e.ChunkResponse\x12.\n\x0bHealthCheck\x12\x0e.HealthRequest\x1a\x0f.HealthResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16image_processing.proto\"D\n\x0fUserCredentials\x12\r\n\x05\x65mail\x18\x01 \x01(\t\x12\x10\n\x08username\x18\x02 \x01(\t\x12\x10\n\x08password\x18\x03 \x01(\t\"\x8b\x01\n\x13ProcessImageRequest\x12\x0f\n\x07user_id\x18\x01 \x01(\t\x12\x1e\n\x04user\x18\x02 \x01(\x0b\x32\x10.UserCredentials\x12\x1a\n\x06images\x18\x03 \x03(\x0b\x32\n.ImageData\x12\x12\n\nmodel_name\x18\x04 \x01(\t\x12\x13\n\x0b\x61\x63tion_type\x18\x05 \x01(\t\"1\n\tImageData\x12\x10\n\x08image_id\x18\x01 \x01(\t\x12\x12\n\nimage_data\x18\x02 \x01(\x0c\"G\n\x12RemoteImageRequest\x12\x1e\n\x04user\x18\x01 \x01(\x0b\x32\x10.UserCredentials\x12\x11\n\timage_url\x18\x02 \x01(\t\"*\n\x14ProcessImageResponse\x12\x12\n\nrequest_id\x18\x01 \x01(\t\"B\n\x0cQueryRequest\x12\x1e\n\x04user\x18\x01 \x01(\x0b\x32\x10.UserCredentials\x12\x12\n\nrequest_id\x18\x02 \x01(\t\"5\n\x0eResultResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x13\n\x0bresult_data\x18\x03 \x03(\t\"\x0e\n\x0c\x45mptyRequest\"F\n\x10ReprocessRequest\x12\x1e\n\x04user\x18\x01 \x01(\x0b\x32\x10.UserCredentials\x12\x12\n\nrequest_id\x18\x02 \x01(\t\"N\n\x17ReprocessResultResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x12\n\nrequest_id\x18\x02 \x01(\t\x12\x0f\n\x07message\x18\x03 \x01(\t\".\n\x0cModelRequest\x12\x1e\n\x04user\x18\x01 \x01(\x0b\x32\x10.UserCredentials\"r\n\tModelInfo\x12\x12\n\nmodel_name\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x0f\n\x07version\x18\x03 \x01(\t\x12\x19\n\x11supported_actions\x18\x04 \x01(\t\x12\x10\n\x08\x61\x63\x63uracy\x18\x05 \x01(\x01\"H\n\x12ModelDetailRequest\x12\x1e\n\x04user\x18\x01 \x01(\x0b\x32\x10.UserCredentials\x12\x12\n\nmodel_name\x18\x02 \x01(\t\"\x8a\x01\n\x0bModelDetail\x12\x12\n\nmodel_name\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x0f\n\x07version\x18\x03 \x01(\t\x12\x19\n\x11supported_actions\x18\x04 \x01(\t\x12\x10\n\x08\x61\x63\x63uracy\x18\x05 \x01(\x01\x12\x14\n\x0clast_updated\x18\x06 \x01(\t\",\n\x13GetServicesResponse\x12\x15\n\rservice_names\x18\x01 \x03(\t\"\"\n\x0c\x43hunkRequest\x12\x12\n\nchunk_data\x18\x01 \x01(\x0c\"2\n\rChunkResponse\x12\x0e\n\x06result\x18\x01 \x01(\t\x12\x11\n\tworker_id\x18\x02 \x01(\t\"\x0f\n\rHealthRequest\" \n\x0eHealthResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\"V\n\x12RequestDataRespond\x12\x12\n\nrequest_id\x18\x01 \x01(\t\x12\x16\n\x0erequest_status\x18\x02 \x01(\t\x12\x14\n\x0crequest_date\x18\x03 \x01(\t2\x8f\x04\n\rMasterService\x12;\n\x0cProcessImage\x12\x14.ProcessImageRequest\x1a\x15.ProcessImageResponse\x12@\n\x12ProcessRemoteImage\x12\x13.RemoteImageRequest\x1a\x15.ProcessImageResponse\x12=\n\x0eReprocessImage\x12\x11.ReprocessRequest\x1a\x18.ReprocessResultResponse\x12-\n\x0bQueryResult\x12\r.QueryRequest\x1a\x0f.ResultResponse\x12\x32\n\x0bGetServices\x12\r.EmptyRequest\x1a\x14.GetServicesResponse\x12(\n\tGetModels\x12\r.ModelRequest\x1a\n.ModelInfo0\x01\x12\x34\n\x0fGetModelDetails\x12\x13.ModelDetailRequest\x1a\x0c.ModelDetail\x12<\n\x11GetAllUserRequest\x12\x10.UserCredentials\x1a\x13.RequestDataRespond0\x01\x12?\n\x17\x44\x65leteProcessingRequest\x12\r.QueryRequest\x1a\x15.ProcessImageResponse2n\n\rWorkerService\x12-\n\x0cProcessChunk\x12\r.ChunkRequest\x1a\x0e.ChunkResponse\x12.\n\x0bHealthCheck\x12\x0e.HealthRequest\x1a\x0f.HealthResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -33,38 +33,46 @@ if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
   _globals['_USERCREDENTIALS']._serialized_start=26
   _globals['_USERCREDENTIALS']._serialized_end=94
-  _globals['_IMAGEREQUEST']._serialized_start=96
-  _globals['_IMAGEREQUEST']._serialized_end=162
-  _globals['_REMOTEIMAGEREQUEST']._serialized_start=164
-  _globals['_REMOTEIMAGEREQUEST']._serialized_end=235
-  _globals['_IMAGERESPONSE']._serialized_start=237
-  _globals['_IMAGERESPONSE']._serialized_end=272
-  _globals['_QUERYREQUEST']._serialized_start=274
-  _globals['_QUERYREQUEST']._serialized_end=340
-  _globals['_RESULTRESPONSE']._serialized_start=342
-  _globals['_RESULTRESPONSE']._serialized_end=390
-  _globals['_REPROCESSREQUEST']._serialized_start=392
-  _globals['_REPROCESSREQUEST']._serialized_end=462
-  _globals['_REPROCESSRESULTRESPONSE']._serialized_start=464
-  _globals['_REPROCESSRESULTRESPONSE']._serialized_end=521
-  _globals['_MODELREQUEST']._serialized_start=523
-  _globals['_MODELREQUEST']._serialized_end=569
-  _globals['_MODELINFO']._serialized_start=571
-  _globals['_MODELINFO']._serialized_end=641
-  _globals['_MODELDETAILREQUEST']._serialized_start=643
-  _globals['_MODELDETAILREQUEST']._serialized_end=715
-  _globals['_MODELDETAIL']._serialized_start=717
-  _globals['_MODELDETAIL']._serialized_end=789
-  _globals['_CHUNKREQUEST']._serialized_start=791
-  _globals['_CHUNKREQUEST']._serialized_end=825
-  _globals['_CHUNKRESPONSE']._serialized_start=827
-  _globals['_CHUNKRESPONSE']._serialized_end=877
-  _globals['_HEALTHREQUEST']._serialized_start=879
-  _globals['_HEALTHREQUEST']._serialized_end=894
-  _globals['_HEALTHRESPONSE']._serialized_start=896
-  _globals['_HEALTHRESPONSE']._serialized_end=928
-  _globals['_MASTERSERVICE']._serialized_start=931
-  _globals['_MASTERSERVICE']._serialized_end=1258
-  _globals['_WORKERSERVICE']._serialized_start=1260
-  _globals['_WORKERSERVICE']._serialized_end=1370
+  _globals['_PROCESSIMAGEREQUEST']._serialized_start=97
+  _globals['_PROCESSIMAGEREQUEST']._serialized_end=236
+  _globals['_IMAGEDATA']._serialized_start=238
+  _globals['_IMAGEDATA']._serialized_end=287
+  _globals['_REMOTEIMAGEREQUEST']._serialized_start=289
+  _globals['_REMOTEIMAGEREQUEST']._serialized_end=360
+  _globals['_PROCESSIMAGERESPONSE']._serialized_start=362
+  _globals['_PROCESSIMAGERESPONSE']._serialized_end=404
+  _globals['_QUERYREQUEST']._serialized_start=406
+  _globals['_QUERYREQUEST']._serialized_end=472
+  _globals['_RESULTRESPONSE']._serialized_start=474
+  _globals['_RESULTRESPONSE']._serialized_end=527
+  _globals['_EMPTYREQUEST']._serialized_start=529
+  _globals['_EMPTYREQUEST']._serialized_end=543
+  _globals['_REPROCESSREQUEST']._serialized_start=545
+  _globals['_REPROCESSREQUEST']._serialized_end=615
+  _globals['_REPROCESSRESULTRESPONSE']._serialized_start=617
+  _globals['_REPROCESSRESULTRESPONSE']._serialized_end=695
+  _globals['_MODELREQUEST']._serialized_start=697
+  _globals['_MODELREQUEST']._serialized_end=743
+  _globals['_MODELINFO']._serialized_start=745
+  _globals['_MODELINFO']._serialized_end=859
+  _globals['_MODELDETAILREQUEST']._serialized_start=861
+  _globals['_MODELDETAILREQUEST']._serialized_end=933
+  _globals['_MODELDETAIL']._serialized_start=936
+  _globals['_MODELDETAIL']._serialized_end=1074
+  _globals['_GETSERVICESRESPONSE']._serialized_start=1076
+  _globals['_GETSERVICESRESPONSE']._serialized_end=1120
+  _globals['_CHUNKREQUEST']._serialized_start=1122
+  _globals['_CHUNKREQUEST']._serialized_end=1156
+  _globals['_CHUNKRESPONSE']._serialized_start=1158
+  _globals['_CHUNKRESPONSE']._serialized_end=1208
+  _globals['_HEALTHREQUEST']._serialized_start=1210
+  _globals['_HEALTHREQUEST']._serialized_end=1225
+  _globals['_HEALTHRESPONSE']._serialized_start=1227
+  _globals['_HEALTHRESPONSE']._serialized_end=1259
+  _globals['_REQUESTDATARESPOND']._serialized_start=1261
+  _globals['_REQUESTDATARESPOND']._serialized_end=1347
+  _globals['_MASTERSERVICE']._serialized_start=1350
+  _globals['_MASTERSERVICE']._serialized_end=1877
+  _globals['_WORKERSERVICE']._serialized_start=1879
+  _globals['_WORKERSERVICE']._serialized_end=1989
 # @@protoc_insertion_point(module_scope)

@@ -9,8 +9,9 @@ from threading import Thread, Lock
 from queue import Queue
 from uuid import uuid4
 from PIL import Image
+# from datetime import datetime
 import io
-import warnings
+import warningss
 
 import auth
 import database_handler
@@ -36,8 +37,10 @@ state_lock = Lock()
 IMAGE_STORAGE_DIR = os.path.join(os.getcwd(), "images")
 
 available_models = {
-    "model_1": {"description": "Object detection model v1", "accuracy": 0.85},
-    "model_2": {"description": "Object detection model v2", "accuracy": 0.90},
+    "Yolov5s": {
+        "description": "YOLOv5 is a computer vision model that is used for object detection. It is an enhanced version of previous YOLO models and operates at a high inference speed, making it effective for real-time applications. It uses PyTorch for faster and more accurate deployment.",
+        "accuracy": 0.85,
+    },
 }
 
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -178,7 +181,7 @@ class MasterServiceServicer(image_processing_pb2_grpc.MasterServiceServicer):
             print(f"Image saved at {image_path}.")
         except Exception as e:
             print(f"Failed to save image: {e}")
-            return image_processing_pb2.ImageResponse(request_id="")
+            return image_processing_pb2.ProcessImageResponse(request_id="")
 
         # Update request state and add to the queue
         with state_lock:
@@ -187,7 +190,7 @@ class MasterServiceServicer(image_processing_pb2_grpc.MasterServiceServicer):
         database_handler.add_request(request_id, request.user.email)
         print(f"Request {request_id} added to the queue.")
 
-        return image_processing_pb2.ImageResponse(request_id=request_id)
+        return image_processing_pb2.ProcessImageResponse(request_id=request_id)
 
     def ProcessRemoteImage(self, request, context):
         """
@@ -258,8 +261,7 @@ class MasterServiceServicer(image_processing_pb2_grpc.MasterServiceServicer):
             context.abort(grpc.StatusCode.INTERNAL, error_message)
 
         # Step 6: Return the request ID
-        return image_processing_pb2.ImageResponse(request_id=request_id)
-
+        return image_processing_pb2.ProcessImageResponse(request_id=request_id)
 
     def ReprocessImage(self, request, context):
         # Extract request details
@@ -272,7 +274,8 @@ class MasterServiceServicer(image_processing_pb2_grpc.MasterServiceServicer):
         ):
             return image_processing_pb2.ReprocessResultResponse(
                 status="failed",
-                result=f"Authentication failed for user: {user_credentials.email}"
+                message=f"Authentication failed for user: {user_credentials.email}",
+                request_id=""
             )
 
         # Locate the image in the filesystem
@@ -281,7 +284,9 @@ class MasterServiceServicer(image_processing_pb2_grpc.MasterServiceServicer):
         if not os.path.exists(image_path):
             return image_processing_pb2.ReprocessResultResponse(
                 status="failed",
-                result=f"No existing request found with ID: {request_id}"
+                message=f"No existing request found with ID: {request_id}",
+                request_id=""
+
             )
 
         # Read the image and convert it to bytes
@@ -292,7 +297,8 @@ class MasterServiceServicer(image_processing_pb2_grpc.MasterServiceServicer):
             print(f"Failed to read image: {e}")
             return image_processing_pb2.ReprocessResultResponse(
                 status="failed",
-                result="Error occurred while reading the stored image."
+                message="Error occurred while reading the stored image.",
+                request_id=""
             )
 
         # Add the reprocessing request to the queue
@@ -305,35 +311,109 @@ class MasterServiceServicer(image_processing_pb2_grpc.MasterServiceServicer):
 
         return image_processing_pb2.ReprocessResultResponse(
             status="success",
-            result=new_request_id
+            message="",
+            request_id=new_request_id
         )
 
     def QueryResult(self, request, context):
         request_id = request.request_id
 
         # First, check the in-memory state for faster access
-        with state_lock:
-            if request_id in request_state:
-                state = request_state[request_id]
-                return image_processing_pb2.ResultResponse(
-                    status=state["status"],
-                    result=json.dumps(state["result"]) if state["result"] else ""
-                )
+        # with state_lock:
+        #     if request_id in request_state:
+        #         state = request_state[request_id]
+        #         return image_processing_pb2.ResultResponse(
+        #             status=state["status"],
+        #             result=json.dumps(state["result"]) if state["result"] else ""
+        #         )
 
         # If not in memory, check the database
         try:
             result = database_handler.get_result_by_request_id(request_id)
             if result:
-                return image_processing_pb2.ResultResponse(status="completed", result=result)
+                return image_processing_pb2.ResultResponse(status="completed", result_data=result)
             else:
-                return image_processing_pb2.ResultResponse(status="not_found", result="Request ID not found.")
+                return image_processing_pb2.ResultResponse(status="not_found", result_data="Request ID not found.")
         except Exception as e:
             print(f"Error retrieving result from database for Request ID {request_id}: {e}")
             return image_processing_pb2.ResultResponse(status="error",
-                                                       result="An error occurred while fetching the result.")
+                                                       result_data="An error occurred while fetching the result.")
 
     def HealthCheck(self, request, context):
         return image_processing_pb2.HealthResponse(status="healthy")
+
+    def GetAllUserRequest(self, request, context):
+        """
+        Fetches all requests made by the user from the database and streams them back.
+
+        Args:
+            request: Contains user credentials for authentication (email, username, password).
+            context: gRPC context for handling errors and metadata.
+
+        Yields:
+            RequestDataRespond: A stream of user requests.
+        """
+        try:
+            # Validate user credentials
+            if not auth.authenticate_user(request.username, request.email, request.password):
+                context.set_code(grpc.StatusCode.UNAUTHENTICATED)
+                context.set_details("Invalid user credentials.")
+                return
+
+            # Fetch user requests from the database
+            user_requests = database_handler.get_all_requests(request.email)
+
+            # Stream each request back to the client
+            for user_request in user_requests:
+                yield image_processing_pb2.RequestDataRespond(
+                    request_id=user_request['request_id'],
+                    request_status=user_request['status'],
+                    request_date=user_request['request_date'].strftime("%Y-%m-%d %H:%M:%S") if user_request[
+                        'request_date'] else "N/A",
+                )
+        except Exception as e:
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(f"Failed to fetch user requests: {str(e)}")
+
+    def DeleteProcessingRequest(self, request, context):
+        """
+        Deletes a request and all associated results from the database.
+
+        Args:
+            request: Contains user credentials and the request ID to delete.
+            context: gRPC context for handling errors and metadata.
+
+        Returns:
+            ImageResponse: Indicates success or failure of the deletion.
+        """
+        try:
+            # Validate user credentials
+            if not auth.authenticate_user(request.user.username, request.user.email, request.user.password):
+                context.set_code(grpc.StatusCode.UNAUTHENTICATED)
+                context.set_details("Invalid user credentials.")
+                return image_processing_pb2.ProcessImageResponse(request_id=request.request_id)
+
+            # Delete the request from the database
+            is_deleted = database_handler.delete_request(request.request_id, request.user.email)
+            print(f"is deleted: {is_deleted}")
+            if is_deleted:
+                return image_processing_pb2.ProcessImageResponse(request_id=request.request_id)
+            else:
+                context.set_code(grpc.StatusCode.NOT_FOUND)
+                context.set_details("Request ID not found or you do not have permission to delete it.")
+                return image_processing_pb2.ProcessImageResponse(request_id=request.request_id)
+        except Exception as e:
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(f"Failed to delete the request: {str(e)}")
+            return image_processing_pb2.ProcessImageResponse(request_id=request.request_id)
+
+    def GetModels(self, request, context):
+        for model_name, model_info in available_models.items():
+            yield image_processing_pb2.ModelInfo(
+                model_name=model_name,
+                description=model_info["description"],
+                accuracy=model_info["accuracy"],
+            )
 
 
 # Threads
@@ -384,6 +464,7 @@ def process_requests():
         # Combine and store results after all worker nodes have responded
         combined_result = json.dumps(all_detections)
         database_handler.add_result(request_id, combined_result, user_credentials.email)
+        database_handler.update_request_status(request_id, "Success")
 
         # Generate descriptions after processing is complete
         image = Image.open(io.BytesIO(image_data))
