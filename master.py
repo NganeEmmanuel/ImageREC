@@ -11,7 +11,7 @@ from uuid import uuid4
 from PIL import Image
 # from datetime import datetime
 import io
-import warningss
+import warnings
 
 import auth
 import database_handler

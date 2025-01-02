@@ -16,26 +16,32 @@ class UserCredentials(_message.Message):
     def __init__(self, email: _Optional[str] = ..., username: _Optional[str] = ..., password: _Optional[str] = ...) -> None: ...
 
 class ProcessImageRequest(_message.Message):
-    __slots__ = ("user_id", "user", "images", "model_name", "action_type")
+    __slots__ = ("user_id", "user", "images", "model_name", "action_type", "number_of_remote_images")
     USER_ID_FIELD_NUMBER: _ClassVar[int]
     USER_FIELD_NUMBER: _ClassVar[int]
     IMAGES_FIELD_NUMBER: _ClassVar[int]
     MODEL_NAME_FIELD_NUMBER: _ClassVar[int]
     ACTION_TYPE_FIELD_NUMBER: _ClassVar[int]
+    NUMBER_OF_REMOTE_IMAGES_FIELD_NUMBER: _ClassVar[int]
     user_id: str
     user: UserCredentials
     images: _containers.RepeatedCompositeFieldContainer[ImageData]
     model_name: str
     action_type: str
-    def __init__(self, user_id: _Optional[str] = ..., user: _Optional[_Union[UserCredentials, _Mapping]] = ..., images: _Optional[_Iterable[_Union[ImageData, _Mapping]]] = ..., model_name: _Optional[str] = ..., action_type: _Optional[str] = ...) -> None: ...
+    number_of_remote_images: int
+    def __init__(self, user_id: _Optional[str] = ..., user: _Optional[_Union[UserCredentials, _Mapping]] = ..., images: _Optional[_Iterable[_Union[ImageData, _Mapping]]] = ..., model_name: _Optional[str] = ..., action_type: _Optional[str] = ..., number_of_remote_images: _Optional[int] = ...) -> None: ...
 
 class ImageData(_message.Message):
-    __slots__ = ("image_id", "image_data")
-    IMAGE_ID_FIELD_NUMBER: _ClassVar[int]
+    __slots__ = ("image_data", "image_id", "image_url", "location")
     IMAGE_DATA_FIELD_NUMBER: _ClassVar[int]
-    image_id: str
+    IMAGE_ID_FIELD_NUMBER: _ClassVar[int]
+    IMAGE_URL_FIELD_NUMBER: _ClassVar[int]
+    LOCATION_FIELD_NUMBER: _ClassVar[int]
     image_data: bytes
-    def __init__(self, image_id: _Optional[str] = ..., image_data: _Optional[bytes] = ...) -> None: ...
+    image_id: int
+    image_url: str
+    location: str
+    def __init__(self, image_data: _Optional[bytes] = ..., image_id: _Optional[int] = ..., image_url: _Optional[str] = ..., location: _Optional[str] = ...) -> None: ...
 
 class RemoteImageRequest(_message.Message):
     __slots__ = ("user", "image_url")

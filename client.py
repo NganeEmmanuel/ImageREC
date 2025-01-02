@@ -1,9 +1,12 @@
+import os
+import json
 import argparse
 import grpc
 import configparser
 import image_processing_pb2
 import image_processing_pb2_grpc
 from tabulate import tabulate
+from urllib.parse import urlparse
 
 CONFIG_FILE = "auth_config.ini"
 
@@ -63,28 +66,87 @@ def get_user_credentials():
     )
 
 
-def detect_image(image_path):
-    """
-    Sends an image to the master for processing and returns a request ID.
-    """
+def is_remote_image(path):
+    """Determine if the given path is a URL."""
+    try:
+        result = urlparse(path)
+        return all([result.scheme, result.netloc])
+    except ValueError:
+        return False
+
+
+def read_local_image(image_path):
+    """Read a local image file and return its binary data."""
     try:
         with open(image_path, 'rb') as f:
-            image_data = f.read()
+            return f.read()
     except FileNotFoundError:
         print(f"Error: File '{image_path}' not found.")
+        return None
+
+
+def parse_image_paths(image_paths):
+    """Parse image paths and return a list of ImageData messages."""
+    images = []
+    image_id = 1
+    for path in image_paths:
+        if is_remote_image(path):
+            images.append(image_processing_pb2.ImageData(image_id=image_id, image_url=path, location="remote"))
+        else:
+            image_data = read_local_image(path)
+            if image_data:
+                images.append(image_processing_pb2.ImageData(image_id=image_id, image_data=image_data, location="local"))
+        image_id += 1
+    return images
+
+
+def process_image(args):
+    """Send a request to process images."""
+    image_paths = []
+    if args.image_path:
+        image_paths = [args.image_path]
+    elif args.json_file:
+        with open(args.json_file, 'r') as f:
+            data = json.load(f)
+            image_paths = [img.get('image_url') for img in data.get('images', [])]
+            args.model_name = data.get('model', args.model_name)
+            args.action_type = data.get('action_type', args.action_type)
+            args.username = data['user'].get('username')
+            args.email = data['user'].get('email')
+            args.password = data['user'].get('password')
+    elif args.text_file:
+        with open(args.text_file, 'r') as f:
+            image_paths = [line.strip() for line in f]
+
+    # Parse images into ImageData messages
+    images = parse_image_paths(image_paths)
+    if not images:
+        print("Error: No valid images found.")
         return
 
-    user_credentials = get_user_credentials()
+    # Build request
+    user_credentials = image_processing_pb2.UserCredentials(
+        username=args.username,
+        email=args.email,
+        password=args.password
+    )
+    request = image_processing_pb2.ProcessImageRequest(
+        user=user_credentials,
+        images=images,
+        model_name=args.model_name,
+        action_type=args.action_type,
+        number_of_remote_images=sum(1 for img in images if img.location == "remote")
+    )
 
+    # Send request
     with grpc.insecure_channel('localhost:50051') as channel:
         stub = image_processing_pb2_grpc.MasterServiceStub(channel)
         try:
-            response = stub.ProcessImage(
-                image_processing_pb2.ImageRequest(user=user_credentials, image_data=image_data)
-            )
+            response = stub.ProcessImage(request)
             print(f"Request submitted. Request ID: {response.request_id}")
         except grpc.RpcError as e:
             print(f"Error communicating with master: {str(e)}")
+
 
 
 def detect_remote_image(image_url):
@@ -229,12 +291,14 @@ def main():
     configure_parser.add_argument("-e", "--email", type=str, help="Email")
     configure_parser.add_argument("-p", "--password", type=str, help="Password")
 
-
     # Detect command
-    detect_parser = subparsers.add_parser("detect", help="Detect objects in an image")
-    detect_parser.add_argument("image_path", nargs="?", type=str,
-                               help="Path to the image file (optional if -r is used)")
+    detect_parser = subparsers.add_parser("detect", help="Process images")
+    detect_parser.add_argument("image_path", nargs="?", type=str, help="Path to the image file")
     detect_parser.add_argument("-r", "--remote", type=str, help="URL of the remote image")
+    detect_parser.add_argument("-j", "--json_file", type=str, help="Path to a JSON file with request details")
+    detect_parser.add_argument("-t", "--text_file", type=str, help="Path to a text file with image paths")
+    detect_parser.add_argument("--model_name", type=str, required=True, help="Name of the model to use")
+    detect_parser.add_argument("--action_type", type=str, required=True, help="Action to perform (e.g., categorize, count_objects)")
 
     # Result command
     result_parser = subparsers.add_parser("result", help="Fetch the result of a request")
@@ -264,12 +328,7 @@ def main():
     if args.command == "configure":
         configure_user(username=args.username, email=args.email, password=args.password)
     elif args.command == "detect":
-        if args.remote:
-            detect_remote_image(args.remote)
-        elif args.image_path:
-            detect_image(args.image_path)
-        else:
-            print("Error: Please provide an image path or use the -r flag for a remote image URL.")
+        process_image(args)
     elif args.command == "result":
         get_result(args.request_id)
     elif args.command == "get_requests":

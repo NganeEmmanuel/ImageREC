@@ -52,12 +52,15 @@ message ProcessImageRequest {
   repeated ImageData images = 3;   // List of images to process
   string model_name = 4;           // Specify which model to use
   string action_type = 5;          // e.g., "categorize", "count_objects"
+  int64 number_of_remote_images = 6;      // indicated the number of remote image url were sent. this allows us to quickly detect if we should download images for processing and how many.
 }
 
 // Message for image data
 message ImageData {
-  string image_id = 1;             // Unique ID for the image
-  bytes image_data = 2;            // Binary data for the image
+  bytes image_data = 2;           // Binary data for the local image
+  int64 image_id = 1;             // Unique ID for the image for each request
+  string image_url = 3;         // url for remote images
+  string location = 4;          // location of the image (e.g., remote or local). this help to determine if we pass image_data or image url
 }
 
 //message ImageRequest {
