@@ -28,6 +28,9 @@ service MasterService {
 
     // Deletes a request by a user by request_id
     rpc DeleteProcessingRequest (QueryRequest) returns (ProcessImageResponse);
+
+    // RPC to get available workers for a specific model type (tag)
+    rpc GetWorkersByTag (WorkerTagRequest) returns (WorkersResponse);
 }
 
 service WorkerService {
@@ -36,6 +39,9 @@ service WorkerService {
 
     // Health check for worker readiness
     rpc HealthCheck (HealthRequest) returns (HealthResponse);
+
+     // RPC for worker registration with a tag
+    rpc RegisterWorker (WorkerRegistration) returns (RegistrationResponse);
 }
 
 // Common message for user credentials
@@ -170,4 +176,33 @@ message RequestDataRespond {
     string request_date = 3;
 }
 
+// Request for worker registration
+message WorkerRegistration {
+    string worker_id = 1; // Unique ID of the worker
+    string tag = 2;       // Tag representing the model type or capability of the worker
+    string address = 3;   // Address of the worker for communication
+}
+
+// Response for worker registration
+message RegistrationResponse {
+    string status = 1;    // Registration status (e.g., "success", "failure")
+    string message = 2;   // Additional message about registration
+}
+
+// Request to get workers by tag
+message WorkerTagRequest {
+    string tag = 1; // Model type or tag to query workers for
+}
+
+// Response containing a list of workers matching the tag
+message WorkersResponse {
+    repeated WorkerInfo workers = 1; // List of available workers
+}
+
+// Information about a worker
+message WorkerInfo {
+    string worker_id = 1;  // ID of the worker
+    string address = 2;    // Address of the worker
+    string tag = 3;        // Tag representing the model type or capability
+}
 

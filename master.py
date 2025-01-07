@@ -64,13 +64,14 @@ def check_worker_ready(worker_address, timeout=10):
     print(f"Worker {worker_address} failed to respond.")
     return False
 
-
+def get_model_path(model_name):
+    pass  # returns the path of the model to be used dinamically
 def start_worker(port):
     """
     Start a worker process at the specified port.
     """
     worker_id = f"worker_{port}"
-    model_path = os.path.abspath("yolov5s.pt")  # Adjust this path based on your model files
+    model_path = get_model_path()  # Adjust this path based on your model files
     worker_address = f"localhost:{port}"
     print(f"Starting new worker at {worker_address}...")
 

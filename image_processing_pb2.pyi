@@ -178,3 +178,43 @@ class RequestDataRespond(_message.Message):
     request_status: str
     request_date: str
     def __init__(self, request_id: _Optional[str] = ..., request_status: _Optional[str] = ..., request_date: _Optional[str] = ...) -> None: ...
+
+class WorkerRegistration(_message.Message):
+    __slots__ = ("worker_id", "tag", "address")
+    WORKER_ID_FIELD_NUMBER: _ClassVar[int]
+    TAG_FIELD_NUMBER: _ClassVar[int]
+    ADDRESS_FIELD_NUMBER: _ClassVar[int]
+    worker_id: str
+    tag: str
+    address: str
+    def __init__(self, worker_id: _Optional[str] = ..., tag: _Optional[str] = ..., address: _Optional[str] = ...) -> None: ...
+
+class RegistrationResponse(_message.Message):
+    __slots__ = ("status", "message")
+    STATUS_FIELD_NUMBER: _ClassVar[int]
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    status: str
+    message: str
+    def __init__(self, status: _Optional[str] = ..., message: _Optional[str] = ...) -> None: ...
+
+class WorkerTagRequest(_message.Message):
+    __slots__ = ("tag",)
+    TAG_FIELD_NUMBER: _ClassVar[int]
+    tag: str
+    def __init__(self, tag: _Optional[str] = ...) -> None: ...
+
+class WorkersResponse(_message.Message):
+    __slots__ = ("workers",)
+    WORKERS_FIELD_NUMBER: _ClassVar[int]
+    workers: _containers.RepeatedCompositeFieldContainer[WorkerInfo]
+    def __init__(self, workers: _Optional[_Iterable[_Union[WorkerInfo, _Mapping]]] = ...) -> None: ...
+
+class WorkerInfo(_message.Message):
+    __slots__ = ("worker_id", "address", "tag")
+    WORKER_ID_FIELD_NUMBER: _ClassVar[int]
+    ADDRESS_FIELD_NUMBER: _ClassVar[int]
+    TAG_FIELD_NUMBER: _ClassVar[int]
+    worker_id: str
+    address: str
+    tag: str
+    def __init__(self, worker_id: _Optional[str] = ..., address: _Optional[str] = ..., tag: _Optional[str] = ...) -> None: ...
