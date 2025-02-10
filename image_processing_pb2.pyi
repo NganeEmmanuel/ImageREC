@@ -16,20 +16,18 @@ class UserCredentials(_message.Message):
     def __init__(self, email: _Optional[str] = ..., username: _Optional[str] = ..., password: _Optional[str] = ...) -> None: ...
 
 class ProcessImageRequest(_message.Message):
-    __slots__ = ("user_id", "user", "images", "model_name", "action_type", "number_of_remote_images")
-    USER_ID_FIELD_NUMBER: _ClassVar[int]
+    __slots__ = ("user", "images", "model_name", "action_type", "number_of_remote_images")
     USER_FIELD_NUMBER: _ClassVar[int]
     IMAGES_FIELD_NUMBER: _ClassVar[int]
     MODEL_NAME_FIELD_NUMBER: _ClassVar[int]
     ACTION_TYPE_FIELD_NUMBER: _ClassVar[int]
     NUMBER_OF_REMOTE_IMAGES_FIELD_NUMBER: _ClassVar[int]
-    user_id: str
     user: UserCredentials
     images: _containers.RepeatedCompositeFieldContainer[ImageData]
     model_name: str
     action_type: str
     number_of_remote_images: int
-    def __init__(self, user_id: _Optional[str] = ..., user: _Optional[_Union[UserCredentials, _Mapping]] = ..., images: _Optional[_Iterable[_Union[ImageData, _Mapping]]] = ..., model_name: _Optional[str] = ..., action_type: _Optional[str] = ..., number_of_remote_images: _Optional[int] = ...) -> None: ...
+    def __init__(self, user: _Optional[_Union[UserCredentials, _Mapping]] = ..., images: _Optional[_Iterable[_Union[ImageData, _Mapping]]] = ..., model_name: _Optional[str] = ..., action_type: _Optional[str] = ..., number_of_remote_images: _Optional[int] = ...) -> None: ...
 
 class ImageData(_message.Message):
     __slots__ = ("image_data", "image_id", "image_url", "location")
@@ -70,8 +68,8 @@ class ResultResponse(_message.Message):
     STATUS_FIELD_NUMBER: _ClassVar[int]
     RESULT_DATA_FIELD_NUMBER: _ClassVar[int]
     status: str
-    result_data: _containers.RepeatedScalarFieldContainer[str]
-    def __init__(self, status: _Optional[str] = ..., result_data: _Optional[_Iterable[str]] = ...) -> None: ...
+    result_data: str
+    def __init__(self, status: _Optional[str] = ..., result_data: _Optional[str] = ...) -> None: ...
 
 class EmptyRequest(_message.Message):
     __slots__ = ()
@@ -146,10 +144,12 @@ class GetServicesResponse(_message.Message):
     def __init__(self, service_names: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class ChunkRequest(_message.Message):
-    __slots__ = ("chunk_data",)
+    __slots__ = ("chunk_data", "action_type")
     CHUNK_DATA_FIELD_NUMBER: _ClassVar[int]
+    ACTION_TYPE_FIELD_NUMBER: _ClassVar[int]
     chunk_data: bytes
-    def __init__(self, chunk_data: _Optional[bytes] = ...) -> None: ...
+    action_type: str
+    def __init__(self, chunk_data: _Optional[bytes] = ..., action_type: _Optional[str] = ...) -> None: ...
 
 class ChunkResponse(_message.Message):
     __slots__ = ("result", "worker_id")

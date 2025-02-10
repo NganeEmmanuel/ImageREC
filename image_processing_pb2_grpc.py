@@ -39,11 +39,6 @@ class MasterServiceStub(object):
                 request_serializer=image__processing__pb2.ProcessImageRequest.SerializeToString,
                 response_deserializer=image__processing__pb2.ProcessImageResponse.FromString,
                 _registered_method=True)
-        self.ProcessRemoteImage = channel.unary_unary(
-                '/MasterService/ProcessRemoteImage',
-                request_serializer=image__processing__pb2.RemoteImageRequest.SerializeToString,
-                response_deserializer=image__processing__pb2.ProcessImageResponse.FromString,
-                _registered_method=True)
         self.ReprocessImage = channel.unary_unary(
                 '/MasterService/ReprocessImage',
                 request_serializer=image__processing__pb2.ReprocessRequest.SerializeToString,
@@ -84,6 +79,11 @@ class MasterServiceStub(object):
                 request_serializer=image__processing__pb2.WorkerTagRequest.SerializeToString,
                 response_deserializer=image__processing__pb2.WorkersResponse.FromString,
                 _registered_method=True)
+        self.RegisterWorker = channel.unary_unary(
+                '/MasterService/RegisterWorker',
+                request_serializer=image__processing__pb2.WorkerRegistration.SerializeToString,
+                response_deserializer=image__processing__pb2.RegistrationResponse.FromString,
+                _registered_method=True)
 
 
 class MasterServiceServicer(object):
@@ -96,15 +96,11 @@ class MasterServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def ProcessRemoteImage(self, request, context):
-        """Handles incoming image requests for remote images from a url
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
     def ReprocessImage(self, request, context):
-        """Handles incoming image reprocessing requests
+        """// Handles incoming image requests for remote images from a url
+        rpc ProcessRemoteImage (RemoteImageRequest) returns (ProcessImageResponse);
+
+        Handles incoming image reprocessing requests
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -159,17 +155,19 @@ class MasterServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def RegisterWorker(self, request, context):
+        """RPC for worker registration with a tag
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_MasterServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'ProcessImage': grpc.unary_unary_rpc_method_handler(
                     servicer.ProcessImage,
                     request_deserializer=image__processing__pb2.ProcessImageRequest.FromString,
-                    response_serializer=image__processing__pb2.ProcessImageResponse.SerializeToString,
-            ),
-            'ProcessRemoteImage': grpc.unary_unary_rpc_method_handler(
-                    servicer.ProcessRemoteImage,
-                    request_deserializer=image__processing__pb2.RemoteImageRequest.FromString,
                     response_serializer=image__processing__pb2.ProcessImageResponse.SerializeToString,
             ),
             'ReprocessImage': grpc.unary_unary_rpc_method_handler(
@@ -212,6 +210,11 @@ def add_MasterServiceServicer_to_server(servicer, server):
                     request_deserializer=image__processing__pb2.WorkerTagRequest.FromString,
                     response_serializer=image__processing__pb2.WorkersResponse.SerializeToString,
             ),
+            'RegisterWorker': grpc.unary_unary_rpc_method_handler(
+                    servicer.RegisterWorker,
+                    request_deserializer=image__processing__pb2.WorkerRegistration.FromString,
+                    response_serializer=image__processing__pb2.RegistrationResponse.SerializeToString,
+            ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
             'MasterService', rpc_method_handlers)
@@ -239,33 +242,6 @@ class MasterService(object):
             target,
             '/MasterService/ProcessImage',
             image__processing__pb2.ProcessImageRequest.SerializeToString,
-            image__processing__pb2.ProcessImageResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def ProcessRemoteImage(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/MasterService/ProcessRemoteImage',
-            image__processing__pb2.RemoteImageRequest.SerializeToString,
             image__processing__pb2.ProcessImageResponse.FromString,
             options,
             channel_credentials,
@@ -493,6 +469,33 @@ class MasterService(object):
             metadata,
             _registered_method=True)
 
+    @staticmethod
+    def RegisterWorker(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/MasterService/RegisterWorker',
+            image__processing__pb2.WorkerRegistration.SerializeToString,
+            image__processing__pb2.RegistrationResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
 
 class WorkerServiceStub(object):
     """Missing associated documentation comment in .proto file."""
@@ -513,11 +516,6 @@ class WorkerServiceStub(object):
                 request_serializer=image__processing__pb2.HealthRequest.SerializeToString,
                 response_deserializer=image__processing__pb2.HealthResponse.FromString,
                 _registered_method=True)
-        self.RegisterWorker = channel.unary_unary(
-                '/WorkerService/RegisterWorker',
-                request_serializer=image__processing__pb2.WorkerRegistration.SerializeToString,
-                response_deserializer=image__processing__pb2.RegistrationResponse.FromString,
-                _registered_method=True)
 
 
 class WorkerServiceServicer(object):
@@ -537,13 +535,6 @@ class WorkerServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def RegisterWorker(self, request, context):
-        """RPC for worker registration with a tag
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
 
 def add_WorkerServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -556,11 +547,6 @@ def add_WorkerServiceServicer_to_server(servicer, server):
                     servicer.HealthCheck,
                     request_deserializer=image__processing__pb2.HealthRequest.FromString,
                     response_serializer=image__processing__pb2.HealthResponse.SerializeToString,
-            ),
-            'RegisterWorker': grpc.unary_unary_rpc_method_handler(
-                    servicer.RegisterWorker,
-                    request_deserializer=image__processing__pb2.WorkerRegistration.FromString,
-                    response_serializer=image__processing__pb2.RegistrationResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -617,33 +603,6 @@ class WorkerService(object):
             '/WorkerService/HealthCheck',
             image__processing__pb2.HealthRequest.SerializeToString,
             image__processing__pb2.HealthResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def RegisterWorker(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/WorkerService/RegisterWorker',
-            image__processing__pb2.WorkerRegistration.SerializeToString,
-            image__processing__pb2.RegistrationResponse.FromString,
             options,
             channel_credentials,
             insecure,

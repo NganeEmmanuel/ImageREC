@@ -103,6 +103,8 @@ def parse_image_paths(image_paths):
 def process_image(args):
     """Send a request to process images."""
     image_paths = []
+    json_user_credentials = None
+
     if args.image_path:
         image_paths = [args.image_path]
     elif args.json_file:
@@ -111,12 +113,13 @@ def process_image(args):
             image_paths = [img.get('image_url') for img in data.get('images', [])]
             args.model_name = data.get('model', args.model_name)
             args.action_type = data.get('action_type', args.action_type)
-            args.username = data['user'].get('username')
-            args.email = data['user'].get('email')
-            args.password = data['user'].get('password')
-    elif args.text_file:
-        with open(args.text_file, 'r') as f:
-            image_paths = [line.strip() for line in f]
+            # Extract user credentials from JSON if present
+            if 'username' in data and 'email' in data and 'password' in data:
+                json_user_credentials = {
+                    'username': data['username'],
+                    'email': data['email'],
+                    'password': data['password']
+                }
 
     # Parse images into ImageData messages
     images = parse_image_paths(image_paths)
@@ -124,12 +127,10 @@ def process_image(args):
         print("Error: No valid images found.")
         return
 
+    # Use credentials from JSON if available, otherwise use config file
+    user_credentials = json_user_credentials or get_user_credentials()
+
     # Build request
-    user_credentials = image_processing_pb2.UserCredentials(
-        username=args.username,
-        email=args.email,
-        password=args.password
-    )
     request = image_processing_pb2.ProcessImageRequest(
         user=user_credentials,
         images=images,
@@ -146,6 +147,7 @@ def process_image(args):
             print(f"Request submitted. Request ID: {response.request_id}")
         except grpc.RpcError as e:
             print(f"Error communicating with master: {str(e)}")
+
 
 
 
@@ -179,7 +181,7 @@ def get_result(request_id):
                 image_processing_pb2.QueryRequest(user=user_credentials, request_id=request_id)
             )
             if response.status == "completed":
-                print(f"Result for Request ID {request_id}: {response.result}")
+                print(f"Result for Request ID {request_id}: {response.result_data}")
             else:
                 print(f"Request ID {request_id} is still processing. Status: {response.status}")
         except grpc.RpcError as e:

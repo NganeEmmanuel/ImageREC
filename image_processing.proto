@@ -4,9 +4,6 @@ service MasterService {
     // Handles incoming image requests for images on the client machine
     rpc ProcessImage (ProcessImageRequest) returns (ProcessImageResponse);
 
-    // Handles incoming image requests for remote images from a url
-    rpc ProcessRemoteImage (RemoteImageRequest) returns (ProcessImageResponse);
-
     // Handles incoming image reprocessing requests
     rpc ReprocessImage (ReprocessRequest) returns (ReprocessResultResponse);
 
@@ -31,6 +28,13 @@ service MasterService {
 
     // RPC to get available workers for a specific model type (tag)
     rpc GetWorkersByTag (WorkerTagRequest) returns (WorkersResponse);
+
+    // RPC for worker registration with a tag
+    rpc RegisterWorker (WorkerRegistration) returns (RegistrationResponse);
+
+    // RPC for Checking VM status for workers
+    rpc GetVMStatus (VMStatusRequest) returns (VMStatusResponse);
+
 }
 
 service WorkerService {
@@ -39,9 +43,6 @@ service WorkerService {
 
     // Health check for worker readiness
     rpc HealthCheck (HealthRequest) returns (HealthResponse);
-
-     // RPC for worker registration with a tag
-    rpc RegisterWorker (WorkerRegistration) returns (RegistrationResponse);
 }
 
 // Common message for user credentials
@@ -53,7 +54,6 @@ message UserCredentials {
 
 // Request for processing an image
 message ProcessImageRequest {
-  string user_id = 1;               // User ID for authentication
   UserCredentials user = 2;  // User information for authentication
   repeated ImageData images = 3;   // List of images to process
   string model_name = 4;           // Specify which model to use
@@ -94,7 +94,7 @@ message QueryRequest {
 // Response containing the status and result of a query
 message ResultResponse {
     string status = 1;  // Status of the request (e.g., pending, completed, failed)
-    repeated string result_data = 3; // The processed data or outcomes
+    string result_data = 2; // The processed data or outcomes
 }
 
 // Message for listing all models
@@ -151,6 +151,7 @@ message GetServicesResponse {
 // Request to process a chunk of image data
 message ChunkRequest {
     bytes chunk_data = 1;  // Binary data for the chunk
+    string action_type = 2;  // the action that needs to be performed, e.g., detect_object, detect_melanomas, etc.
 }
 
 // Response from the worker for the processed chunk
@@ -181,6 +182,8 @@ message WorkerRegistration {
     string worker_id = 1; // Unique ID of the worker
     string tag = 2;       // Tag representing the model type or capability of the worker
     string address = 3;   // Address of the worker for communication
+    string model_type = 4;
+    string action_type = 5;
 }
 
 // Response for worker registration
@@ -204,5 +207,19 @@ message WorkerInfo {
     string worker_id = 1;  // ID of the worker
     string address = 2;    // Address of the worker
     string tag = 3;        // Tag representing the model type or capability
+    string vm_id = 4;      // The VM ID where the worker is running
+    string vm_status = 5;  // The current status of the VM (running/stopped)
 }
+
+message VMStatusRequest {
+    string vm_id = 1; // ID of the VM to query
+}
+
+message VMStatusResponse {
+    string vm_id = 1; // VM ID
+    string status = 2; // "running", "stopped"
+    string ip_address = 3; // VM IP address
+    string worker_id = 4; // Worker ID running inside the VM, if any
+}
+
 
